@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ARG 解密游戏 · 练习骨架</title>
+	<!--
+  ============================================
+  这是你的练习文件
+  跟着教程一步步往 <style> 里填 CSS
+  HTML 结构已经帮你搭好了
+  ============================================
+-->
+	<link
+		href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
+		rel="stylesheet">
+	<style>
+		/* ============================================
+   步骤 1：CSS 变量
+   在这里定义你的颜色体系
+   ============================================ */
+		:root {
+			--bg: #08080d;
+			--bg2: #0e0e16;
+			--card: #111119;
+			--border: #1a1a28;
+
+			--accent: #e94560;
+			--blue: #4a9eff;
+			--green: #34d399;
+			--purple: #a78bfa;
+			--yellow: #fbbf24;
+
+			/* 文字层级 */
+			--text: #d4d4d8;
+			/* 正文 */
+			--muted: #52525b;
+		}
+
+
+		/* ============================================
+   步骤 2：全局重置 + body
+   * 通配符重置 + body 基础样式
+   ============================================ */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			background-color: var(--bg);
+			color: var(--text);
+			font-family: 'Noto Sans SC', sans-serif;
+			line-height: 1.75;
+			-webkit-font-smoothing: antialiased;
+		}
+
+		/* ============================================
+   步骤 3：容器 .wrap
+   max-width + margin auto 居中
+   ============================================ */
+		.wrap {
+			max-width: 900px;
+			margin: 0 auto;
+			padding: 60px 28px 120px;
+			position: relative;
+			z-index: index 1;
+		}
+
+
+		/* ============================================
+   步骤 4：背景光晕 body::before
+   伪元素 + radial-gradient
+   ============================================ */
+		body::before {
+			content: '';
+			position: fixed;
+			inset: 0;
+			background: 
+				radial-gradient(
+					ellipse at 20% 0%,
+					rgba(246, 2, 43, 0.15) 0%,
+					transparent 60%
+				),
+				 radial-gradient(
+     				 ellipse at 80% 100%,    /* 右下角的椭圆光晕 */
+   					   rgba(35, 9, 112, 0.15) 0%, /* 紫色，4%透明度 */
+  				    transparent 60%
+  				  );
+				  
+			pointer-events: none; 
+			z-index: 0;
+		}
+
+
+		/* ============================================
+   步骤 5：Hero 标题区
+   渐变文字、letter-spacing
+   ============================================ */
+		.hero {
+			text-align: center;
+			margin-bottom: 72px;
+		}
+
+		.hero .mano {
+			font-family: 'JetBrains Mono', monospace;
+ 	 	font-size: 11px;
+ 				 letter-spacing: 4px;    /* 字间距拉开 → 大写字母更有标签感 */
+
+			 text-transform: uppercase;
+			  color: var(--accent);
+		}
+
+		.hero h1{
+			 font-size: 38px;
+			 font-weight: 900;
+			 letter-spacing: -1px; 
+			 background: linear-gradient(135deg, #fff 30%, #666);
+				-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		}
+
+		/* ============================================
+   步骤 6：Section 标题栏
+   flex + gap + 编号标签
+   ============================================ */
+		.section {
+			margin-bottom: 64px;
+		}
+
+		.section-head {
+			display: flex;
+			align-items: center;
+		 gap: 12px;   	
+		  border-bottom: 1px solid var(--border);
+		  margin-bottom: 24px;
+		}
+		.section-head .num {
+font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bg);         /* 深色文字 */
+  background: var(--accent); /* 红色底 */
+  padding: 3px 10px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+		}
+		/* ============================================
+   步骤 7：卡片 .card
+   border-left 彩色边框、hover transition
+   ============================================ */
+
+		.card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 24px 28px;
+			margin-bottom: 16px;
+			transition: border-color .3s;
+		}
+		.card:hover {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.card-accent { border-left: 3px solid var(--accent); }
+.card-blue   { border-left: 3px solid var(--blue); }
+.card-green  { border-left: 3px solid var(--green); }
+.card-purple { border-left: 3px solid var(--purple); }
+
+		/* ============================================
+   步骤 8：高亮框 .highlight
+   rgba 透明色体系
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 9：时间线 .flow
+   ::before 竖线 + 圆点
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 10：表格 .tbl
+   border-collapse
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 11：三列路径 .paths
+   CSS Grid
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 12：分割线 .divider
+   伪元素 + 背景色遮线
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 13：聊天框 .chat-box
+   嵌套选择器
+   ============================================ */
+
+
+
+		/* ============================================
+   步骤 14：标签 .tag + 响应式 @media
+   ============================================ */
+	</style>
+</head>
+
+<body>
+
+	<!-- ============================================
+     整个页面只有一个容器 .wrap
+     对应步骤 3
+     ============================================ -->
+	<div class="wrap">
+
+
+		<!-- ==========================================
+       HERO 标题区 · 对应步骤 5
+       ========================================== -->
+		<div class="hero">
+			<div class="mono">Final Framework v1.0</div>
+			<h1>ARG 解密游戏 · 完整框架设计</h1>
+			<div class="sub">~2小时 · 单人解密 · 纯前端</div>
+		</div>
+
+
+		<!-- ==========================================
+       第一个 SECTION · 对应步骤 6（标题栏）+ 步骤 7（卡片）+ 步骤 8（高亮框）
+       ========================================== -->
+		<div class="section">
+
+			<!-- section 标题栏 -->
+			<div class="section-head">
+				<span class="num">01</span>
+				<h2>核心概念</h2>
+			</div>
+
+			<!-- 卡片：红色边框 -->
+			<div class="card card-accent">
+				<h3>一句话概括</h3>
+				<p>玩家因朋友随手发来的一张照片，一步步进入一个叫 timegov 的神秘网站……</p>
+			</div>
+
+			<!-- 卡片：蓝色边框 -->
+			<div class="card card-blue">
+				<h3>核心骗局结构</h3>
+				<p><b>玩家以为：</b>我在调查一个神秘网站的真相。</p>
+				<p><b>实际上：</b>一个"东西"在利用我的好奇心。</p>
+			</div>
+
+			<!-- 高亮框 -->
+			<div class="highlight">
+				<b>设计哲学：</b>全程日常化。玩家在过程中只感到"好奇"和"有趣"。恐惧是游戏结束后才涌上来的。
+			</div>
+
+		</div>
+
+
+		<!-- ==========================================
+       第二个 SECTION · 对应步骤 7（更多卡片变体）
+       ========================================== -->
+		<div class="section">
+			<div class="section-head">
+				<span class="num">02</span>
+				<h2>核心机制：时间</h2>
+			</div>
+
+			<!-- 紫色卡片 -->
+			<div class="card card-purple">
+				<h3>机制 A · OS 内时间与现实不同步</h3>
+				<p>玩家进入模拟OS后，右下角的系统时钟显示的不是当前真实时间。</p>
+				<ul>
+					<li><b>刚进入时：</b>只差几分钟</li>
+					<li><b>探索中期：</b>差距扩大到几十分钟</li>
+					<li><b>后期：</b>OS时间在加速</li>
+				</ul>
+				<!-- 紫色高亮框 -->
+				<div class="highlight purple">
+					<b>纯前端实现：</b>JS获取 new Date() 作为基准，用加速系数计算虚拟时间。
+				</div>
+			</div>
+
+			<!-- 黄色卡片 -->
+			<div class="card card-yellow">
+				<h3>两个机制如何配合</h3>
+				<p>机制A是<b>游戏内的紧迫感</b>。机制B是<b>游戏外的探索层</b>。</p>
+			</div>
+		</div>
+
+
+		<!-- ==========================================
+       分割线 · 对应步骤 12
+       ========================================== -->
+		<div class="divider">
+			<span style="color:#34d399;">第一幕 · 水面下的形状 · 15-20 min</span>
+		</div>
+
+
+		<!-- ==========================================
+       时间线 · 对应步骤 9
+       ========================================== -->
+		<div class="flow">
+
+			<div class="flow-node fn-g">
+				<div class="fn-time">0:00 - 0:03</div>
+				<div class="fn-title">开场 · 困告小狗的消息</div>
+				<div class="fn-desc">日常闲聊 → "给你发一张意义不明的照片" → 水印 timegov.net</div>
+			</div>
+
+			<div class="flow-node fn-y">
+				<div class="fn-time">0:06 - 0:09</div>
+				<div class="fn-title">发帖询问 · "有人知道 timegov 吗？"</div>
+				<div class="fn-desc">模拟社交平台发帖，获得入口链接</div>
+			</div>
+
+			<div class="flow-node fn-b">
+				<div class="fn-time">0:09 - 0:12</div>
+				<div class="fn-title">进入 timegov.net</div>
+				<div class="fn-desc">极简政务风格网站，部分内容需要登录</div>
+			</div>
+
+			<div class="flow-node fn-r">
+				<div class="fn-time">0:12 - 0:18</div>
+				<div class="fn-title">谜题 #1 · 登录凭证</div>
+				<div class="fn-desc">线索分散在帖子回复、照片EXIF、timegov公开页面中</div>
+			</div>
+
+		</div>
+
+
+		<!-- ==========================================
+       三列路径 · 对应步骤 11
+       ========================================== -->
+		<div class="section">
+			<div class="section-head">
+				<span class="num">05</span>
+				<h2>三条觉醒路径</h2>
+			</div>
+
+			<div class="paths">
+				<div class="path-card path-a">
+					<h4>路径 A · 关掉一切</h4>
+					<p>当玩家尝试关闭OS窗口时，系统弹出意味深长的对话框。</p>
+				</div>
+				<div class="path-card path-b">
+					<h4>路径 B · 质问"你是谁"</h4>
+					<p>"前员工"的回答开始出现矛盾，语气发生变化。</p>
+				</div>
+				<div class="path-card path-c">
+					<h4>路径 C · 找到遗言</h4>
+					<p>遗言直接告诉玩家真相："不要相信聊天框里的任何人。"</p>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- ==========================================
+       表格 · 对应步骤 10
+       ========================================== -->
+		<div class="section">
+			<div class="section-head">
+				<span class="num">07</span>
+				<h2>时间线索的埋设节奏</h2>
+			</div>
+
+			<table class="tbl">
+				<thead>
+					<tr>
+						<th>阶段</th>
+						<th>时间异常</th>
+						<th>玩家感知</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><b>第一幕</b></td>
+						<td>照片EXIF的时间戳差值</td>
+						<td>只当做谜题素材</td>
+					</tr>
+					<tr>
+						<td><b>第二幕前期</b></td>
+						<td>OS时钟与现实差2-3分钟</td>
+						<td>几乎不会注意到</td>
+					</tr>
+					<tr>
+						<td><b>第三幕</b></td>
+						<td>OS时间加速肉眼可见</td>
+						<td>无法忽视</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+
+		<!-- ==========================================
+       聊天框 · 对应步骤 13
+       ========================================== -->
+		<div class="section">
+			<div class="section-head">
+				<span class="num">06</span>
+				<h2>结局设计</h2>
+			</div>
+
+			<div class="card card-green">
+				<h3>回到聊天界面</h3>
+				<p>一切看起来很正常——就像你只是走神了一会儿。</p>
+			</div>
+
+			<div class="chat-box">
+				<div class="chat-msg">
+					<div class="chat-name chat-name-a">困告小狗🍀</div>
+					<div class="chat-text">你还在吗</div>
+				</div>
+				<div class="chat-msg">
+					<div class="chat-name chat-name-a">困告小狗🍀</div>
+					<div class="chat-text">那个网站怎么样了</div>
+				</div>
+				<div class="chat-msg">
+					<div class="chat-name chat-name-a">困告小狗🍀</div>
+					<div class="chat-text">帖子没了</div>
+				</div>
+				<div class="chat-msg">
+					<div class="chat-name chat-name-a">困告小狗🍀</div>
+					<div class="chat-text">就像从来没存在过一样</div>
+				</div>
+			</div>
+
+			<!-- 红色高亮框 -->
+			<div class="highlight">
+				<b>余韵效果：</b>困告小狗最初发照片的时间，是在小红书帖子发布之前。
+			</div>
+		</div>
+
+
+		<!-- ==========================================
+       标签 · 对应步骤 14
+       ========================================== -->
+		<div class="section">
+			<div class="section-head">
+				<span class="num">08</span>
+				<h2>标签示例</h2>
+			</div>
+			<div class="card">
+				<h3>各种标签</h3>
+				<p>下面是不同颜色的标签：</p>
+				<span class="tag tag-r">PUZZLE</span>
+				<span class="tag tag-b">SYSTEM</span>
+				<span class="tag tag-g">SAFE</span>
+				<span class="tag tag-p">HIDDEN</span>
+				<span class="tag tag-y">WARNING</span>
+			</div>
+		</div>
+
+
+	</div><!-- end .wrap -->
+</body>
+
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARG 框架 v2 · "你不是第一个"</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070c;--card:#0f0f17;--border:#181825;--r:#e94560;--b:#4a9eff;--g:#34d399;--y:#fbbf24;--p:#a78bfa;--o:#fb923c;--c:#22d3ee;--t:#d4d4d8;--m:#52525b;--d:#27272a}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t);font-family:'Noto Sans SC',sans-serif;line-height:1.8;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 0%,rgba(233,69,96,.03) 0%,transparent 50%),radial-gradient(ellipse at 85% 100%,rgba(167,139,250,.03) 0%,transparent 50%);pointer-events:none}
+.w{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:56px 24px 120px}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* hero */
+.hero{text-align:center;margin-bottom:64px}
+.hero .tag{display:inline-block;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--r);border:1px solid rgba(233,69,96,.25);padding:5px 16px;border-radius:2px;margin-bottom:20px}
+.hero h1{font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:8px;background:linear-gradient(135deg,#fff 30%,#555);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .sub{font-size:13px;color:var(--m);font-weight:300}
+
+/* section */
+.sec{margin-bottom:56px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sh .n{font-size:11px;font-weight:700;color:var(--bg);background:var(--r);padding:3px 10px;border-radius:3px;letter-spacing:1px}
+.sh h2{font-size:20px;font-weight:700;color:#fff}
+
+/* card */
+.c{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:20px 24px;margin-bottom:14px;transition:border-color .3s}
+.c:hover{border-color:rgba(255,255,255,.06)}
+.c h3{font-size:15px;font-weight:700;margin-bottom:8px;color:#fff}
+.c p,.c li{font-size:13px;color:#a1a1aa;line-height:1.8}
+.c ul{padding-left:16px;margin-top:6px}
+.c li{margin-bottom:5px}
+.c li b{color:var(--t)}
+.cr{border-left:3px solid var(--r)}.cb{border-left:3px solid var(--b)}.cg{border-left:3px solid var(--g)}.cp{border-left:3px solid var(--p)}.cy{border-left:3px solid var(--y)}.co{border-left:3px solid var(--o)}.cc{border-left:3px solid var(--c)}
+
+/* highlight */
+.hl{border-radius:6px;padding:16px 20px;margin:14px 0;font-size:13px;line-height:1.8}
+.hl b{font-weight:700}
+.hl-r{background:rgba(233,69,96,.06);border:1px solid rgba(233,69,96,.12);color:#e4a0ad}.hl-r b{color:var(--r)}
+.hl-b{background:rgba(74,158,255,.06);border:1px solid rgba(74,158,255,.12);color:#a0c8e4}.hl-b b{color:var(--b)}
+.hl-p{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.12);color:#c4b8e4}.hl-p b{color:var(--p)}
+.hl-g{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.12);color:#a0e4c8}.hl-g b{color:var(--g)}
+
+/* divider */
+.dv{text-align:center;margin:48px 0 40px;position:relative}
+.dv::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--border)}
+.dv span{position:relative;display:inline-block;background:var(--bg);padding:6px 22px;font-size:11px;letter-spacing:3px;text-transform:uppercase;border:1px solid var(--border);border-radius:4px;color:var(--m)}
+
+/* table */
+.tb{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px}
+.tb th{text-align:left;padding:9px 12px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);color:var(--m);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.tb td{padding:9px 12px;border-bottom:1px solid var(--border);color:#a1a1aa;vertical-align:top}
+.tb td b{color:var(--t)}
+
+/* code block */
+.code{background:#0a0a12;border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin:12px 0;font-size:12px;color:var(--g);line-height:1.7;overflow-x:auto;white-space:pre}
+.code .cm{color:var(--m)}
+.code .kw{color:var(--p)}
+.code .str{color:var(--y)}
+.code .fn{color:var(--b)}
+
+/* chat mock */
+.chat{background:#14141e;border-radius:7px;padding:14px 18px;margin:12px 0;font-size:12.5px;border:1px solid var(--border)}
+.cm{margin-bottom:8px}
+.cm .cn{font-size:10px;font-weight:600;margin-bottom:1px}
+.cm .ct{color:#a1a1aa}
+.cn-a{color:var(--g)}.cn-b{color:var(--b)}.cn-s{color:var(--r);font-style:italic}
+
+/* terminal mock */
+.term{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:14px 18px;margin:12px 0;font-size:11.5px;color:var(--g);line-height:1.9}
+.term .prompt{color:var(--m)}
+.term .warn{color:var(--y)}
+.term .err{color:var(--r)}
+.term .dim{color:#3a3a4a}
+
+/* grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:700px){.g2,.g3{grid-template-columns:1fr}.hero h1{font-size:24px}}
+
+/* flow */
+.fl{position:relative;padding-left:32px;margin:20px 0}
+.fl::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(to bottom,var(--r),var(--p),var(--m))}
+.fn{position:relative;margin-bottom:20px}
+.fn::before{content:'';position:absolute;left:-27px;top:7px;width:10px;height:10px;border-radius:50%;border:2px solid;background:var(--bg)}
+.fn-r::before{border-color:var(--r)}.fn-b::before{border-color:var(--b)}.fn-g::before{border-color:var(--g)}.fn-p::before{border-color:var(--p)}.fn-y::before{border-color:var(--y)}.fn-o::before{border-color:var(--o)}
+.fn .ft{font-size:10px;color:var(--m);margin-bottom:2px}
+.fn .fh{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.fn .fd{font-size:12px;color:#71717a;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="w">
+
+<div class="hero">
+  <div class="tag mono">Framework v2.0 · Updated</div>
+  <h1>ARG 框架 · "你不是第一个"</h1>
+  <div class="sub">在 v1 基础上深化核心恐怖机制：撒网、循环、吞噬</div>
+</div>
+
+<!-- ==================== 1 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">01</span><h2>升级后的核心设定</h2></div>
+
+  <div class="c cr">
+    <h3>从"一个鬼在等你"到"一张网在运作"</h3>
+    <p>timegov 不是一个有意识的"鬼"在针对你。它更像是一台<b>自动运转的机器</b>——一套程序、一个循环、一种模式。它不关心"你是谁"，它只需要"有人来"。</p>
+    <p>这比"鬼"更可怕。鬼有意志、有目的、可以被理解。但一台不断运转的机器没有恶意，它只是在执行。你不是被"选中"的特别的人——你只是恰好踩到了网上。</p>
+  </div>
+
+  <div class="hl hl-r">
+    <b>恐怖升级：</b>在 v1 中，玩家是"被骗的人"。在 v2 中，玩家是"网上无数猎物中恰好走得最深的那一个"。这把恐怖从"个人遭遇"升级为"系统性的、无差别的、正在持续发生的事"。
+  </div>
+</div>
+
+<!-- ==================== 2 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">02</span><h2>循环机制 · 吞噬与再生</h2></div>
+
+  <div class="c cp">
+    <h3>循环是怎么运作的</h3>
+    <p>每一个"被吞噬"的人都会变成下一个循环的素材：</p>
+    <ul>
+      <li><b>她的照片</b>带着 timegov 水印被投放到社交平台 → 成为下一个人的"引子"</li>
+      <li><b>她的电脑</b>变成了模拟OS → 成为下一个人翻看的"别人的桌面"</li>
+      <li><b>她的聊天记录</b>残留在OS中 → 成为下一个人拼凑的"线索"</li>
+      <li><b>她的身份痕迹</b>被编入timegov的"归档条目" → 成为网站看起来"正常运转"的一部分</li>
+    </ul>
+  </div>
+
+  <div class="c cy">
+    <h3>玩家在游戏中看到的"证据"</h3>
+    <p>以下内容分散在OS各处，玩家需要自己拼合才能意识到这个循环：</p>
+    <ul>
+      <li>OS浏览器历史中有人搜索过"timegov是什么" → 上一个人也是这样进来的</li>
+      <li>OS聊天软件中有人对朋友说"有个人给我发了个奇怪的链接" → 上一个人也是被朋友引进来的</li>
+      <li>OS文件夹中有另一个人的照片，照片风格和你收到的那张自拍一样日常 → 那是更早一轮的"诱饵"</li>
+      <li>回收站中有一份被删除的文件，恢复后发现是一段类似"遗言"的文字 → 但不是GM的，是上一个受害者写的</li>
+    </ul>
+  </div>
+
+  <div class="hl hl-p">
+    <b>关键叙事体验：</b>玩家一开始以为自己在调查"一个人的失踪"，后来发现是"一系列人的消失"，最后意识到自己正在成为这个系列的下一个。从旁观者到参与者到潜在受害者——身份的三次转变。
+  </div>
+</div>
+
+<!-- ==================== 3 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">03</span><h2>Express 后端 · 极简设计</h2></div>
+
+  <p style="font-size:13px;color:#71717a;margin-bottom:16px">
+    后端不是重点功能，但它能让"你不是第一个"从叙事概念变成<b>玩家能亲眼看到的真实数据</b>。三个接口就够了。
+  </p>
+
+  <div class="c cb">
+    <h3>API 设计（共 3 个接口）</h3>
+  </div>
+
+  <div class="term">
+<span class="prompt">// 接口 1：玩家进入OS时调用</span>
+POST /api/enter
+body: { timestamp }
+→ 把时间戳写入 visitors.json，返回 { id, total }
+
+<span class="prompt">// 接口 2：OS内"系统日志"文件请求数据</span>
+GET /api/log
+→ 返回最近 50 条访问记录 { entries: [{ id, time }], total }
+
+<span class="prompt">// 接口 3：timegov 首页访客计数</span>
+GET /api/count
+→ 返回 { total }
+  </div>
+
+  <div class="c cg">
+    <h3>数据结构（一个JSON文件）</h3>
+  </div>
+
+  <div class="term">
+<span class="prompt">// visitors.json</span>
+{
+  "total": 1847,
+  "entries": [
+    { "id": "TG-0001", "time": "2024-03-15T02:17:33Z" },
+    { "id": "TG-0002", "time": "2024-03-15T14:42:08Z" },
+    <span class="dim">// ... </span>
+    { "id": "TG-1847", "time": "2025-03-05T21:03:15Z" }  <span class="warn">← 你</span>
+  ]
+}
+  </div>
+
+  <div class="hl hl-b">
+    <b>降级方案：</b>如果后端暂时不做，可以用纯前端模拟——JS生成一组假的时间戳数据，从某个起始日期到当前时间按随机间隔分布。视觉效果几乎一样，只是数据不是真实的。后续有后端了可以无缝切换。
+  </div>
+</div>
+
+<!-- ==================== 4 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">04</span><h2>这些数据在游戏中怎么呈现</h2></div>
+
+  <div class="g2">
+    <div class="c cb">
+      <h3>🏛️ timegov 首页</h3>
+      <p>页面底部有一行小字，仿政府网站的访问计数器风格：</p>
+      <p style="margin-top:8px;text-align:center;color:var(--m);font-size:12px">
+        本站累计归档条目：<b style="color:var(--t)">1,847</b> 条<br>
+        <span style="font-size:10px">系统持续运行中</span>
+      </p>
+      <p style="margin-top:8px">玩家第一次看到时不会在意。游戏结束后如果回来看，数字涨了。</p>
+    </div>
+    <div class="c cp">
+      <h3>🖥️ OS 系统日志</h3>
+      <p>OS桌面上有一个"system_log.txt"。打开后是一个列表：</p>
+      <div class="term" style="font-size:10.5px;margin-top:8px">
+[SESSION LOG - TimeGov Archive OS]
+─────────────────────────────
+TG-1843  2025.03.04  09:14:22  <span class="dim">CONNECTED</span>
+TG-1844  2025.03.04  16:47:55  <span class="dim">CONNECTED</span>
+TG-1845  2025.03.04  23:31:07  <span class="dim">CONNECTED</span>
+TG-1846  2025.03.05  11:22:18  <span class="dim">CONNECTED</span>
+TG-1847  2025.03.05  21:03:15  <span class="warn">CONNECTED  ← CURRENT</span>
+<span class="dim">_</span>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:var(--r)">玩家翻到底发现最后一条是自己。如果后端是实时的，还可能在看的时候出现新的一条——别人也进来了。</p>
+    </div>
+  </div>
+
+  <div class="c co">
+    <h3>关键恐怖时刻：往上翻</h3>
+    <p>系统日志可以往上翻。越往上翻，日期越早。最早的条目可能追溯到几年前。</p>
+    <p>但真正让人不舒服的是——<b>有些条目的状态不是 CONNECTED，而是别的什么</b>：</p>
+    <div class="term" style="font-size:10.5px;margin-top:8px">
+TG-0001  2019.11.08  03:33:01  <span class="err">ARCHIVED</span>
+TG-0002  2019.11.15  22:14:38  <span class="err">ARCHIVED</span>
+TG-0003  2019.12.01  04:07:52  <span class="dim">DISCONNECTED</span>
+TG-0004  2020.01.23  19:55:14  <span class="err">ARCHIVED</span>
+TG-0005  2020.02.11  01:28:33  <span class="err">ARCHIVED</span>
+TG-0006  2020.03.07  15:42:09  <span class="dim">DISCONNECTED</span>
+    </div>
+    <p style="margin-top:10px">大部分是 <span style="color:var(--r)">ARCHIVED</span>（被吞噬了），少数是 <span style="color:var(--m)">DISCONNECTED</span>（逃出来了）。</p>
+    <p>玩家现在的状态是 <span style="color:var(--y)">CONNECTED</span>。这不是一个你想长时间保持的状态。</p>
+  </div>
+
+  <div class="hl hl-r">
+    <b>叙事暗示：</b>DISCONNECTED 的条目很少——说明大部分人没能逃出来。但它们的存在给了玩家希望：有人做到了。你也可以。<br><br>
+    <b>彩蛋：</b>TG-0003（第一个DISCONNECTED）的时间是凌晨4:07。如果玩家在机制B的"隐藏时间窗"登录，可以找到这个人留下的一份文件——一份比GM遗言更早的"逃生笔记"。
+  </div>
+</div>
+
+<!-- ==================== 5 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">05</span><h2>自拍女生的新定位</h2></div>
+
+  <div class="c cr">
+    <h3>她是 TG-1842</h3>
+    <p>照片中的女生不是随机的陌生人。她是<b>上一个被 ARCHIVED 的人</b>。</p>
+    <p>时间线：</p>
+    <ul>
+      <li>她在某个时间点和玩家一样，因为好奇进入了 timegov</li>
+      <li>她浏览了更早一个人的 OS（就像玩家现在浏览的一样）</li>
+      <li>她没能及时觉醒，状态变成了 ARCHIVED</li>
+      <li>她的自拍从她的文件中被提取出来，加上 timegov 水印，投放到社交平台</li>
+      <li>她的电脑变成了玩家现在正在浏览的这台 OS</li>
+    </ul>
+  </div>
+
+  <div class="hl hl-r">
+    <b>终极细思极恐：</b>玩家正在翻看的OS，就是这个女生的电脑。她之前在这台电脑上做的事——搜索timegov、和朋友聊天说"有个奇怪的网站"、在记事本上写下自己的困惑——全都留在这里。玩家在读她的故事，但她的故事和玩家自己正在经历的故事<b>几乎一模一样</b>。<br><br>
+    而如果玩家失败了，自己的照片就会成为下一轮的"引子"，自己的浏览记录就会成为下一个人翻看的"OS"。
+  </div>
+</div>
+
+<!-- ==================== 6 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">06</span><h2>更新后的三幕结构</h2></div>
+
+  <div class="dv"><span style="color:var(--g)">第一幕 · 入网 · 15-20 min</span></div>
+
+  <div class="fl">
+    <div class="fn fn-g"><div class="ft mono">0:00</div><div class="fh">困告小狗发来照片</div><div class="fd">和 v1 相同。照片就是 TG-1842 的自拍，timegov 水印。</div></div>
+    <div class="fn fn-y"><div class="ft mono">0:05</div><div class="fh">发帖 / 讨论 / 搜索</div><div class="fd">获取 timegov 入口。帖子回复中给链接的"网友"——也许只是另一个好奇的人，也许是更早的循环残留。</div></div>
+    <div class="fn fn-b"><div class="ft mono">0:09</div><div class="fh">进入 timegov</div><div class="fd">仿政府界面。底部有访客计数。登录墙。</div></div>
+    <div class="fn fn-r"><div class="ft mono">0:12</div><div class="fh">谜题 #1 · 登录</div><div class="fd">时间相关的解密。进入后看到归档列表——全是普通照片。</div></div>
+    <div class="fn fn-o"><div class="ft mono">0:18</div><div class="fh">"前员工"联系你</div><div class="fd">聊天框闪烁。对方自称前员工，说网站"突然复活了"。引导你进入OS。<br><b>埋设：</b>对方说"我注意到你登录了"——但你刚登录不到1分钟，它的消息就来了。</div></div>
+  </div>
+
+  <div class="dv"><span style="color:var(--p)">第二幕 · 深入 · 50-60 min</span></div>
+
+  <div class="fl">
+    <div class="fn fn-p"><div class="ft mono">0:22</div><div class="fh">进入 TG-1842 的 OS</div><div class="fd">古老 Windows 桌面。右下角时钟偏差（机制A启动）。玩家不知道这是那个女生的电脑——但会逐渐发现。</div></div>
+    <div class="fn fn-p"><div class="ft mono">0:25-0:45</div><div class="fh">自由探索 + 谜题链</div><div class="fd">
+      翻文件、看聊天记录、查浏览器历史。逐渐拼出 TG-1842 的故事——<br>
+      · 她也是被朋友发了个链接<br>
+      · 她也进了 timegov<br>
+      · 她也在这里浏览了"上一个人"的 OS<br>
+      · 她在记事本上写："这个人的经历怎么和我这么像？"<br>
+      <b>玩家读到这句话时的感受 = 游戏的核心体验</b>
+    </div></div>
+    <div class="fn fn-g"><div class="ft mono">穿插</div><div class="fh">困告小狗逐渐不安</div><div class="fd">她也查了一些东西。她说"那个小红书帖子被删了"。她说"我搜了那个账号，什么都没有"。她开始问"你还在看那个网站吗，要不算了吧"。</div></div>
+    <div class="fn fn-b"><div class="ft mono">穿插</div><div class="fh">"前员工"持续引导</div><div class="fd">温和地引导你打开特定文件。"你看到那个文件夹了吗？""试试打开回收站。"<br>每一次引导都让你觉得在靠近真相——但其实在靠近终点。</div></div>
+    <div class="fn fn-o"><div class="ft mono">0:45-0:55</div><div class="fh">发现系统日志</div><div class="fd">打开 system_log.txt。看到长长的列表。ARCHIVED、DISCONNECTED、CONNECTED。翻到底看到自己。这是"日常外壳裂开"的时刻。</div></div>
+    <div class="fn fn-r"><div class="ft mono">0:55</div><div class="fh">关键发现：循环的证据</div><div class="fd">
+      几条线索在此刻汇合：<br>
+      · TG-1842 的故事和自己的经历高度重合<br>
+      · 系统日志显示大部分人被 ARCHIVED<br>
+      · OS时钟已经明显偏快<br>
+      · "前员工"的时间戳出现无法解释的异常<br>
+      玩家意识到：<b>我正处在循环之中，而且快到终点了。</b>
+    </div></div>
+  </div>
+
+  <div class="dv"><span style="color:var(--r)">第三幕 · 逃离 · 20-30 min</span></div>
+
+  <div class="fl">
+    <div class="fn fn-r"><div class="ft mono">1:00</div><div class="fh">谜题 · 找到逃生方法</div><div class="fd">
+      GM遗言碎片 + TG-0003（第一个DISCONNECTED）的逃生笔记 = 逃离方法。<br>
+      与此同时"前员工"的语气开始变化——从温和变为急切。"你快看完了""别停下来""我们快到了"。<br>
+      OS时钟加速肉眼可见。
+    </div></div>
+    <div class="fn fn-o"><div class="ft mono">1:15</div><div class="fh">三条逃离路径</div><div class="fd">关掉OS / 质问"你是谁" / 按遗言操作。三条路都通向DISCONNECTED。</div></div>
+    <div class="fn fn-g"><div class="ft mono">1:25</div><div class="fh">结局</div><div class="fd">回到聊天界面。困告小狗的消息。那张照片的时间戳矛盾。渐暗。结束。</div></div>
+  </div>
+</div>
+
+<!-- ==================== 7 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">07</span><h2>"那个东西"的行为设计</h2></div>
+
+  <p style="font-size:13px;color:#71717a;margin-bottom:16px">
+    "前员工"不是一个角色，它是一套自动执行的<b>引导程序</b>。以下是它在三个阶段的行为模式：
+  </p>
+
+  <table class="tb">
+    <thead>
+      <tr><th>阶段</th><th>语气</th><th>行为</th><th>破绽</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>第一幕</b><br><span style="color:var(--m)">接触期</span></td>
+        <td>友好、随意、像一个同样好奇的人</td>
+        <td>"我也是最近才发现这个网站复活了""你也注意到了？"建立共鸣和信任</td>
+        <td>回复速度过于一致（每条消息间隔几乎相同）</td>
+      </tr>
+      <tr>
+        <td><b>第二幕</b><br><span style="color:var(--m)">引导期</span></td>
+        <td>耐心、有帮助感、像一个导师</td>
+        <td>"你看到那个文件了吗""试试打开那个""你做得很好"——温和地引导玩家执行操作</td>
+        <td>时间戳偶尔早于玩家操作；从不回答关于自己的问题；语言没有任何个人特征</td>
+      </tr>
+      <tr>
+        <td><b>第三幕</b><br><span style="color:var(--m)">急切期</span></td>
+        <td>从温和变为急切，最后变为恳求/命令</td>
+        <td>"别停下来""你快到了""不要关闭窗口""再看一个文件就好"——试图阻止玩家逃离</td>
+        <td>完全暴露。消息频率失控，时间戳混乱，语气不再像人类。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="chat">
+    <div style="text-align:center;font-size:10px;color:var(--m);margin-bottom:10px">── 第三幕 · 当玩家试图离开时 ──</div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">等一下</div></div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">你还没看完</div></div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">还有一个文件你没有打开</div></div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">你已经走了这么远了</div></div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">不要浪费了</div></div>
+    <div class="cm"><div class="cn cn-b">前员工</div><div class="ct">留下来</div></div>
+    <div class="cm"><div class="cn cn-s">[消息发送时间：比你的上一条操作早了3分钟]</div></div>
+  </div>
+</div>
+
+<!-- ==================== 8 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">08</span><h2>结局的最后一层</h2></div>
+
+  <div class="c cr">
+    <h3>逃出来之后</h3>
+    <p>玩家成功 DISCONNECTED。回到困告小狗的聊天界面。一切恢复正常。</p>
+    <p>但——</p>
+  </div>
+
+  <div class="chat">
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">你还在吗</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">那个网站怎么样了</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">我刚才又去看了那个小红书帖子</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">帖子没了 账号也没了</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">就像从来没存在过一样</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">算了不管了</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">对了</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">刚才有人加我</div></div>
+    <div class="cm"><div class="cn cn-a">困告小狗🍀</div><div class="ct">问我是不是发过一个关于 timegov 的帖子</div></div>
+  </div>
+
+  <div class="hl hl-r">
+    <b>最后一击：</b>循环没有因为你的逃离而停止。你逃出来了，但网还在运转。有新的人注意到了timegov，有新的人在好奇，有新的人正在走你走过的路。<br><br>
+    而困告小狗——她在不知情的情况下，刚刚成为了下一轮循环的"困告小狗"角色：那个把信息传递给下一个人的中间人。<br><br>
+    屏幕渐暗。<br><br>
+    <b>游戏结束。</b>
+  </div>
+</div>
+
+<!-- ==================== 9 ==================== -->
+<div class="sec">
+  <div class="sh"><span class="n mono">09</span><h2>待设计清单（更新）</h2></div>
+
+  <table class="tb">
+    <thead><tr><th>项目</th><th>优先级</th><th>备注</th></tr></thead>
+    <tbody>
+      <tr><td><b>OS内文件系统</b>——TG-1842的完整故事</td><td style="color:var(--r)">高</td><td>这是第二幕的全部内容，需要详细设计每个文件</td></tr>
+      <tr><td><b>"前员工"完整对话脚本</b></td><td style="color:var(--r)">高</td><td>三个阶段的对话 + 被质问后的反应</td></tr>
+      <tr><td><b>困告小狗完整对话脚本</b></td><td style="color:var(--r)">高</td><td>全程对话 + 各触发点反应</td></tr>
+      <tr><td><b>各谜题具体机制</b></td><td style="color:var(--r)">高</td><td>至少3-4个，都围绕"时间"主题</td></tr>
+      <tr><td><b>timegov网站UI</b></td><td style="color:var(--y)">中</td><td>仿政府风格 HTML/CSS</td></tr>
+      <tr><td><b>发帖平台页面</b></td><td style="color:var(--y)">中</td><td>模拟某社交平台</td></tr>
+      <tr><td><b>Express后端</b>（3个接口）</td><td style="color:var(--m)">低</td><td>可先用前端模拟降级，后续接入</td></tr>
+      <tr><td><b>机制B时间段内容差异</b></td><td style="color:var(--m)">低</td><td>白天版/夜间版/隐藏窗口 · 增值层</td></tr>
+      <tr><td><b>TG-0003逃生笔记</b>（彩蛋）</td><td style="color:var(--m)">低</td><td>只在特定时间窗出现</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

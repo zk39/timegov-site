@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>从零构建 Windows 98 Web OS 模拟器 — 完整教程</title>
+<style>
+:root {
+  --bg: #fafaf8;
+  --text: #1a1a1a;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --accent: #0060df;
+  --accent-light: #e8f0fe;
+  --border: #d0d0d0;
+  --sidebar-bg: #f0f0ee;
+  --heading: #111;
+  --step-bg: #008080;
+  --warn-bg: #fff8e1;
+  --warn-border: #f9a825;
+  --tip-bg: #e8f5e9;
+  --tip-border: #43a047;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.8;
+  display: flex; min-height: 100vh;
+}
+
+/* ===== SIDEBAR NAV ===== */
+.sidebar {
+  width: 280px; position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--sidebar-bg); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 24px 16px; font-size: 13px;
+  z-index: 100;
+}
+.sidebar h2 { font-size: 15px; color: var(--step-bg); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--step-bg); }
+.sidebar ul { list-style: none; }
+.sidebar li { margin-bottom: 2px; }
+.sidebar a { text-decoration: none; color: #444; display: block; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
+.sidebar a:hover { background: #e0e0de; }
+.sidebar .s2 { padding-left: 20px; font-size: 12px; color: #666; }
+.sidebar .chapter { font-weight: 700; color: var(--heading); margin-top: 12px; padding: 4px 8px; }
+
+/* ===== MAIN CONTENT ===== */
+.main { margin-left: 280px; max-width: 860px; padding: 40px 48px 80px; }
+h1 { font-size: 32px; color: var(--step-bg); margin-bottom: 8px; line-height: 1.3; }
+.subtitle { font-size: 16px; color: #666; margin-bottom: 40px; }
+h2 { font-size: 24px; color: var(--heading); margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+h3 { font-size: 18px; color: var(--heading); margin: 32px 0 12px; }
+h4 { font-size: 15px; color: #333; margin: 20px 0 8px; }
+p { margin-bottom: 14px; }
+
+/* ===== STEP BADGE ===== */
+.step-badge {
+  display: inline-block; background: var(--step-bg); color: #fff;
+  font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 12px;
+  margin-right: 8px; vertical-align: middle;
+}
+
+/* ===== CODE BLOCKS ===== */
+pre {
+  background: var(--code-bg); color: var(--code-text); padding: 16px 20px;
+  border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.6;
+  margin: 12px 0 20px; font-family: "Fira Code", "Cascadia Code", "Menlo", monospace;
+  border: 1px solid #313244;
+}
+code {
+  font-family: "Fira Code", "Cascadia Code", "Menlo", monospace;
+  font-size: 0.9em; background: #eee; padding: 1px 6px; border-radius: 3px;
+}
+pre code { background: none; padding: 0; }
+
+/* Keywords highlighting (manual) */
+.kw { color: #cba6f7; } /* purple - keywords */
+.fn { color: #89b4fa; } /* blue - functions */
+.st { color: #a6e3a1; } /* green - strings */
+.cm { color: #6c7086; } /* gray - comments */
+.nu { color: #fab387; } /* orange - numbers */
+.at { color: #f9e2af; } /* yellow - attributes */
+
+/* ===== CALLOUT BOXES ===== */
+.warn { background: var(--warn-bg); border-left: 4px solid var(--warn-border); padding: 12px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.warn strong { color: #e65100; }
+.tip { background: var(--tip-bg); border-left: 4px solid var(--tip-border); padding: 12px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.tip strong { color: #2e7d32; }
+.concept { background: var(--accent-light); border-left: 4px solid var(--accent); padding: 12px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.concept strong { color: #1565c0; }
+
+/* ===== DIAGRAM ===== */
+.diagram {
+  background: #fff; border: 1px solid var(--border); padding: 20px;
+  margin: 16px 0; border-radius: 8px; font-family: monospace; font-size: 13px;
+  line-height: 1.5; white-space: pre; overflow-x: auto;
+}
+
+/* ===== TABLE ===== */
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th { background: #f0f0f0; text-align: left; padding: 8px 12px; border: 1px solid var(--border); font-weight: 600; }
+td { padding: 8px 12px; border: 1px solid var(--border); }
+tr:nth-child(even) td { background: #fafafa; }
+
+/* ===== FILE TREE ===== */
+.file-tree { font-family: monospace; font-size: 13px; background: #fff; border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin: 12px 0; }
+.file-tree div { padding: 1px 0; }
+.ft-dir { color: var(--accent); font-weight: 600; }
+.ft-file { color: #333; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 24px 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== SIDEBAR ==================== -->
+<nav class="sidebar">
+  <h2>📖 教程目录</h2>
+  <ul>
+    <li><a class="chapter" href="#ch0">前言：项目概览</a></li>
+    <li><a class="chapter" href="#ch1">第一章：骨架与布局</a></li>
+    <li><a class="s2" href="#ch1-1">1.1 HTML 结构</a></li>
+    <li><a class="s2" href="#ch1-2">1.2 CSS 基础样式</a></li>
+    <li><a class="s2" href="#ch1-3">1.3 DOM 工具函数 h()</a></li>
+    <li><a class="chapter" href="#ch2">第二章：启动动画</a></li>
+    <li><a class="s2" href="#ch2-1">2.1 Boot 黑屏文字流</a></li>
+    <li><a class="s2" href="#ch2-2">2.2 光标闪烁动画</a></li>
+    <li><a class="chapter" href="#ch3">第三章：登录界面</a></li>
+    <li><a class="s2" href="#ch3-1">3.1 Win98 对话框</a></li>
+    <li><a class="s2" href="#ch3-2">3.2 表单与登录逻辑</a></li>
+    <li><a class="chapter" href="#ch4">第四章：桌面环境</a></li>
+    <li><a class="s2" href="#ch4-1">4.1 桌面 + 任务栏分离</a></li>
+    <li><a class="s2" href="#ch4-2">4.2 桌面图标</a></li>
+    <li><a class="s2" href="#ch4-3">4.3 任务栏与时钟</a></li>
+    <li><a class="chapter" href="#ch5">第五章：窗口系统</a></li>
+    <li><a class="s2" href="#ch5-1">5.1 窗口外壳 Shell</a></li>
+    <li><a class="s2" href="#ch5-2">5.2 拖拽系统</a></li>
+    <li><a class="s2" href="#ch5-3">5.3 缩放与最大化</a></li>
+    <li><a class="s2" href="#ch5-4">5.4 窗口层级管理</a></li>
+    <li><a class="chapter" href="#ch6">第六章：虚拟文件系统</a></li>
+    <li><a class="s2" href="#ch6-1">6.1 数据结构设计</a></li>
+    <li><a class="s2" href="#ch6-2">6.2 路径解析</a></li>
+    <li><a class="s2" href="#ch6-3">6.3 文件读写</a></li>
+    <li><a class="chapter" href="#ch7">第七章：文件管理器</a></li>
+    <li><a class="s2" href="#ch7-1">7.1 Explorer 布局</a></li>
+    <li><a class="s2" href="#ch7-2">7.2 文件夹树</a></li>
+    <li><a class="s2" href="#ch7-3">7.3 文件网格与导航</a></li>
+    <li><a class="chapter" href="#ch8">第八章：记事本</a></li>
+    <li><a class="s2" href="#ch8-1">8.1 Textarea 持久化</a></li>
+    <li><a class="s2" href="#ch8-2">8.2 保存到虚拟文件系统</a></li>
+    <li><a class="chapter" href="#ch9">第九章：浏览器</a></li>
+    <li><a class="s2" href="#ch9-1">9.1 iframe 加载</a></li>
+    <li><a class="s2" href="#ch9-2">9.2 标签页系统</a></li>
+    <li><a class="s2" href="#ch9-3">9.3 错误页面</a></li>
+    <li><a class="chapter" href="#ch10">第十章：右键菜单与开始菜单</a></li>
+    <li><a class="chapter" href="#ch11">第十一章：关机/重启/待机</a></li>
+    <li><a class="chapter" href="#ch12">第十二章：架构总结</a></li>
+  </ul>
+</nav>
+
+<!-- ==================== MAIN CONTENT ==================== -->
+<main class="main">
+
+<h1>从零构建 Windows 98 Web OS 模拟器</h1>
+<p class="subtitle">一份面向初学者的完整前端教程 — 纯 HTML + CSS + JavaScript，无框架依赖</p>
+
+<!-- ==================== CH0 ==================== -->
+<h2 id="ch0">前言：项目概览</h2>
+
+<h3>你将学到什么</h3>
+<p>这个项目用一个 HTML 文件模拟了一个完整的 Windows 98 操作系统界面，包含：启动动画、登录界面、桌面环境、可拖拽/缩放的窗口、文件管理器、记事本、浏览器、右键菜单、开始菜单、关机动画。</p>
+
+<p>通过这个项目，你会深入掌握以下技能：</p>
+
+<table>
+<tr><th>技能领域</th><th>具体内容</th></tr>
+<tr><td>DOM 操作</td><td>动态创建/销毁/更新元素，不依赖任何框架</td></tr>
+<tr><td>事件系统</td><td>mousedown/mousemove/mouseup 协作、事件冒泡与 stopPropagation</td></tr>
+<tr><td>CSS 布局</td><td>Flexbox 嵌套、position absolute/fixed、z-index 层级</td></tr>
+<tr><td>状态管理</td><td>用纯 JS 对象管理窗口状态、文件系统、导航历史</td></tr>
+<tr><td>架构设计</td><td>模块化代码组织、单例模式、持久化 DOM 策略</td></tr>
+</table>
+
+<h3>核心架构思想：创建一次，原地更新</h3>
+
+<div class="concept">
+<strong>💡 关键理念</strong><br>
+很多初学者会在状态变化时用 <code>innerHTML = ""</code> 清空所有 DOM 再重新创建。这会导致：<br>
+① 拖拽句柄断开（元素被销毁了）<br>
+② 页面闪烁（销毁再重建有视觉跳帧）<br>
+③ textarea 输入丢失（元素被替换了）<br><br>
+正确做法：DOM 元素创建后<strong>保持存活</strong>，通过修改属性（style、textContent、display）来更新 UI。只有窗口关闭时才销毁对应的 DOM。
+</div>
+
+<h3>最终架构</h3>
+<div class="diagram">┌─────────────────────────────────────────────┐
+│  App (顶层编排)                               │
+│  ├── state: { openList, windows, activeWin } │
+│  ├── openApp() / closeWindow() / ...         │
+│  └── _register() → 追加到 desktopArea         │
+├─────────────────────────────────────────────┤
+│  模块                          职责           │
+│  ─────                         ────           │
+│  h()                     创建 DOM 元素         │
+│  FileSystem              虚拟文件树            │
+│  ContextMenu             右键菜单（单例）       │
+│  Interaction             拖拽 + 缩放           │
+│  createWindowShell()     窗口框架              │
+│  Taskbar                 底部任务栏            │
+│  StartMenu               开始菜单             │
+│  createXxxWindow()       各应用窗口构建器       │
+└─────────────────────────────────────────────┘</div>
+
+
+<!-- ==================== CH1 ==================== -->
+<h2 id="ch1">第一章：骨架与布局</h2>
+
+<h3 id="ch1-1">1.1 HTML 结构</h3>
+<p>整个项目只有一个 HTML 文件。HTML 部分极简 — 只有一个空容器 <code>&lt;div id="app"&gt;</code>，所有内容都由 JavaScript 动态创建：</p>
+
+<pre><code><span class="cm">&lt;!-- 这就是全部 HTML --&gt;</span>
+<span class="kw">&lt;!DOCTYPE html&gt;</span>
+<span class="kw">&lt;html</span> <span class="at">lang</span>=<span class="st">"en"</span><span class="kw">&gt;</span>
+<span class="kw">&lt;head&gt;</span>
+  <span class="kw">&lt;meta</span> <span class="at">charset</span>=<span class="st">"UTF-8"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;meta</span> <span class="at">name</span>=<span class="st">"viewport"</span> <span class="at">content</span>=<span class="st">"width=device-width, initial-scale=1.0"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;title&gt;</span>Windows 98 Simulator<span class="kw">&lt;/title&gt;</span>
+  <span class="kw">&lt;link</span> <span class="at">rel</span>=<span class="st">"stylesheet"</span> <span class="at">href</span>=<span class="st">"https://unpkg.com/98.css"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;style&gt;</span> <span class="cm">/* 你的 CSS */</span> <span class="kw">&lt;/style&gt;</span>
+<span class="kw">&lt;/head&gt;</span>
+<span class="kw">&lt;body&gt;</span>
+  <span class="kw">&lt;div</span> <span class="at">id</span>=<span class="st">"app"</span><span class="kw">&gt;&lt;/div&gt;</span>
+  <span class="kw">&lt;script&gt;</span> <span class="cm">/* 你的全部 JS */</span> <span class="kw">&lt;/script&gt;</span>
+<span class="kw">&lt;/body&gt;</span>
+<span class="kw">&lt;/html&gt;</span></code></pre>
+
+<div class="tip">
+<strong>💎 98.css</strong><br>
+<code>98.css</code> 是一个开源库，提供了 Win98 风格的 UI 组件：按钮、标题栏、输入框、树形菜单、状态栏等。它让你不需要手写这些复古样式。
+</div>
+
+<h3 id="ch1-2">1.2 CSS 基础样式</h3>
+<p>先写好最基础的 CSS。关键是让 <code>html → body → #app</code> 形成满屏链条：</p>
+
+<pre><code><span class="cm">/* 满屏基础 */</span>
+* { <span class="at">box-sizing</span>: border-box; <span class="at">margin</span>: <span class="nu">0</span>; <span class="at">padding</span>: <span class="nu">0</span>; }
+html, body { <span class="at">width</span>: <span class="nu">100%</span>; <span class="at">height</span>: <span class="nu">100%</span>; <span class="at">overflow</span>: hidden; }
+<span class="cm">/* ↓ 这一行非常关键！没有它，所有子元素的 height:100% 都会失效 */</span>
+#app { <span class="at">width</span>: <span class="nu">100%</span>; <span class="at">height</span>: <span class="nu">100%</span>; }
+
+<span class="cm">/* 桌面区域 — teal 背景只在这里，不覆盖任务栏 */</span>
+#desktop-area {
+  <span class="at">flex</span>: <span class="nu">1</span>;          <span class="cm">/* 占满除任务栏外的所有空间 */</span>
+  <span class="at">position</span>: relative; <span class="cm">/* 窗口用 absolute 定位在这里面 */</span>
+  <span class="at">background</span>: <span class="st">#008080</span>;
+  <span class="at">overflow</span>: hidden;
+}</code></pre>
+
+<div class="warn">
+<strong>⚠️ 踩坑警告</strong><br>
+如果忘记写 <code>#app { height: 100% }</code>，整个页面会塌缩成 0 高度，你会看到一片空白或者只有任务栏可见。这是因为 CSS 的 <code>height: 100%</code> 需要每一层父元素都有明确高度。
+</div>
+
+<h3 id="ch1-3">1.3 DOM 工具函数 h()</h3>
+<p>我们不用 React/Vue，但需要一个快捷方式来创建 DOM 元素。<code>h()</code> 函数就是我们的"迷你框架"：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">h</span>(tag, attrs, ...children) {
+  <span class="kw">const</span> el = document.<span class="fn">createElement</span>(tag);
+
+  <span class="cm">// 处理属性</span>
+  <span class="kw">if</span> (attrs) {
+    <span class="kw">for</span> (<span class="kw">const</span> [k, v] <span class="kw">of</span> Object.<span class="fn">entries</span>(attrs)) {
+      <span class="kw">if</span> (k === <span class="st">"style"</span> && <span class="kw">typeof</span> v === <span class="st">"object"</span>)
+        Object.<span class="fn">assign</span>(el.style, v);     <span class="cm">// style 对象直接合并</span>
+      <span class="kw">else if</span> (k.<span class="fn">startsWith</span>(<span class="st">"on"</span>))
+        el.<span class="fn">addEventListener</span>(k.<span class="fn">slice</span>(<span class="nu">2</span>).<span class="fn">toLowerCase</span>(), v);  <span class="cm">// onClick → click</span>
+      <span class="kw">else if</span> (k === <span class="st">"className"</span>)
+        el.className = v;
+      <span class="kw">else if</span> (k === <span class="st">"innerHTML"</span>)
+        el.innerHTML = v;
+      <span class="kw">else</span>
+        el.<span class="fn">setAttribute</span>(k, v);         <span class="cm">// 其他当 HTML 属性处理</span>
+    }
+  }
+
+  <span class="cm">// 处理子元素</span>
+  <span class="kw">for</span> (<span class="kw">const</span> c <span class="kw">of</span> children) {
+    <span class="kw">if</span> (c == <span class="kw">null</span>) <span class="kw">continue</span>;
+    <span class="kw">if</span> (<span class="kw">typeof</span> c === <span class="st">"string"</span>)
+      el.<span class="fn">appendChild</span>(document.<span class="fn">createTextNode</span>(c));
+    <span class="kw">else if</span> (Array.<span class="fn">isArray</span>(c))
+      c.<span class="fn">forEach</span>(x => x && el.<span class="fn">appendChild</span>(x));
+    <span class="kw">else</span>
+      el.<span class="fn">appendChild</span>(c);
+  }
+  <span class="kw">return</span> el;
+}
+
+<span class="cm">// 用法示例：</span>
+<span class="kw">const</span> btn = <span class="fn">h</span>(<span class="st">"button"</span>, {
+  className: <span class="st">"my-btn"</span>,
+  onClick: () => <span class="fn">alert</span>(<span class="st">"clicked!"</span>),
+  style: { color: <span class="st">"red"</span> }
+}, <span class="st">"Click Me"</span>);
+
+<span class="cm">// 等价于手写：</span>
+<span class="cm">// const btn = document.createElement("button");</span>
+<span class="cm">// btn.className = "my-btn";</span>
+<span class="cm">// btn.addEventListener("click", () => alert("clicked!"));</span>
+<span class="cm">// btn.style.color = "red";</span>
+<span class="cm">// btn.appendChild(document.createTextNode("Click Me"));</span></code></pre>
+
+<p>后面所有代码都用 <code>h()</code> 来创建元素，你会看到它无处不在。</p>
+
+
+<!-- ==================== CH2 ==================== -->
+<h2 id="ch2">第二章：启动动画</h2>
+
+<h3 id="ch2-1">2.1 Boot 黑屏文字流</h3>
+<p>启动画面就是在黑色背景上逐行打印文字，模拟 DOS 启动过程。核心是用 <code>setTimeout</code> 递归实现逐行输出：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">showBootScreen</span>(onDone) {
+  <span class="kw">const</span> app = document.<span class="fn">getElementById</span>(<span class="st">"app"</span>);
+  app.innerHTML = <span class="st">""</span>;  <span class="cm">// Boot 阶段可以清空，因为之前没有需要保留的元素</span>
+
+  <span class="kw">const</span> scr = <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"boot-screen"</span> });
+  app.<span class="fn">appendChild</span>(scr);
+
+  <span class="kw">const</span> msgs = [
+    <span class="st">"Starting Windows 98..."</span>,
+    <span class="st">"Initializing system devices..."</span>,
+    <span class="st">"Loading device drivers..."</span>,
+    <span class="st">"HIMEM is testing extended memory...done."</span>,
+    <span class="cm">// ...更多启动消息</span>
+  ];
+
+  <span class="kw">let</span> idx = <span class="nu">0</span>;
+  <span class="kw">function</span> <span class="fn">tick</span>() {
+    <span class="kw">if</span> (idx >= msgs.length) {
+      <span class="cm">// 所有消息打完，淡出后进入下一阶段</span>
+      <span class="fn">setTimeout</span>(() => {
+        scr.style.opacity = <span class="st">"0"</span>;  <span class="cm">// CSS transition 会平滑淡出</span>
+        <span class="fn">setTimeout</span>(onDone, <span class="nu">500</span>);
+      }, <span class="nu">1500</span>);
+      <span class="kw">return</span>;
+    }
+
+    <span class="cm">// 追加一行文字</span>
+    scr.<span class="fn">appendChild</span>(<span class="fn">h</span>(<span class="st">"div"</span>, <span class="kw">null</span>, msgs[idx]));
+    scr.scrollTop = scr.scrollHeight;  <span class="cm">// 自动滚到底部</span>
+    idx++;
+
+    <span class="cm">// 不同阶段用不同的速度，模拟真实启动</span>
+    <span class="kw">const</span> delay = idx > <span class="nu">20</span> ? <span class="nu">400</span> : idx > <span class="nu">15</span> ? <span class="nu">200</span> : idx > <span class="nu">10</span> ? <span class="nu">100</span> : <span class="nu">50</span>;
+    <span class="fn">setTimeout</span>(tick, delay);
+  }
+
+  <span class="fn">setTimeout</span>(tick, <span class="nu">500</span>);  <span class="cm">// 延迟半秒开始</span>
+}</code></pre>
+
+<h3 id="ch2-2">2.2 光标闪烁动画</h3>
+<p>Boot 界面末尾的闪烁光标用纯 CSS 实现：</p>
+
+<pre><code><span class="cm">/* CSS */</span>
+.boot-cursor {
+  <span class="at">display</span>: inline-block;
+  <span class="at">width</span>: <span class="nu">8px</span>;
+  <span class="at">height</span>: <span class="nu">14px</span>;
+  <span class="at">background</span>: <span class="st">#ccc</span>;
+  <span class="at">animation</span>: blink <span class="nu">0.5s</span> step-end infinite; <span class="cm">/* step-end 让它是瞬间切换而非渐变 */</span>
+}
+<span class="kw">@keyframes</span> blink { <span class="nu">50%</span> { <span class="at">opacity</span>: <span class="nu">0</span>; } }</code></pre>
+
+<div class="concept">
+<strong>💡 回调模式</strong><br>
+<code>showBootScreen(onDone)</code> 接受一个回调函数。启动完成后调用 <code>onDone()</code>，由调用者决定下一步做什么。这种模式贯穿整个项目：<code>showBootScreen(() => showLoginScreen(() => setupDesktop()))</code>
+</div>
+
+
+<!-- ==================== CH3 ==================== -->
+<h2 id="ch3">第三章：登录界面</h2>
+
+<h3 id="ch3-1">3.1 Win98 对话框</h3>
+<p>98.css 提供了 <code>.window</code>、<code>.title-bar</code>、<code>.window-body</code> 等 class，我们只需要按照它的结构组装：</p>
+
+<pre><code><span class="kw">const</span> win = <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"window"</span>, style: { width: <span class="st">"400px"</span> } },
+  <span class="cm">// 标题栏</span>
+  <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"title-bar"</span> },
+    <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"title-bar-text"</span> }, <span class="st">"Log On to Windows"</span>),
+    <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"title-bar-controls"</span> },
+      <span class="fn">h</span>(<span class="st">"button"</span>, { <span class="st">"aria-label"</span>: <span class="st">"Close"</span> }),
+    )
+  ),
+  <span class="cm">// 窗口内容</span>
+  <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"window-body"</span> },
+    <span class="cm">// ...表单内容</span>
+  )
+);</code></pre>
+
+<h3 id="ch3-2">3.2 表单与登录逻辑</h3>
+<p>输入框对齐技巧 — 给 label 固定宽度：</p>
+
+<pre><code><span class="cm">// 两个 label 宽度不同（"User name:" vs "Password:"）</span>
+<span class="cm">// 给它们统一宽度，输入框就自然对齐了</span>
+<span class="fn">h</span>(<span class="st">"label"</span>, {
+  style: { display: <span class="st">"inline-block"</span>, width: <span class="st">"80px"</span> }
+}, <span class="st">"User name:"</span>)</code></pre>
+
+<p>登录时展示一个加载遮罩（模拟 "Loading your personal settings..."），然后进入桌面：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">doLogin</span>() {
+  <span class="kw">const</span> name = unInput.value.<span class="fn">trim</span>() || <span class="st">"Administrator"</span>;
+
+  <span class="cm">// 创建加载遮罩</span>
+  <span class="kw">const</span> overlay = <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"loading-overlay"</span> },
+    <span class="cm">/* ...进度条窗口... */</span>
+  );
+  document.body.<span class="fn">appendChild</span>(overlay);
+
+  <span class="cm">// 400ms 后移除遮罩，进入桌面</span>
+  <span class="fn">setTimeout</span>(() => {
+    overlay.<span class="fn">remove</span>();
+    onLogin(name); <span class="cm">// 回调 → setupDesktop()</span>
+  }, <span class="nu">400</span>);
+}</code></pre>
+
+
+<!-- ==================== CH4 ==================== -->
+<h2 id="ch4">第四章：桌面环境</h2>
+
+<h3 id="ch4-1">4.1 桌面 + 任务栏分离</h3>
+
+<div class="warn">
+<strong>⚠️ 常见错误</strong><br>
+很多人把 teal 背景色设在整个页面上，导致任务栏也被覆盖。正确做法是用 Flexbox 让桌面和任务栏成为两个独立的区块。
+</div>
+
+<pre><code><span class="cm">// 外层容器：竖向排列</span>
+<span class="kw">const</span> container = <span class="fn">h</span>(<span class="st">"div"</span>, {
+  style: {
+    width: <span class="st">"100%"</span>, height: <span class="st">"100%"</span>,
+    display: <span class="st">"flex"</span>,
+    flexDirection: <span class="st">"column"</span>  <span class="cm">// ← 关键！竖向排列</span>
+  }
+});
+
+<span class="cm">// 桌面区域：flex:1 占满剩余空间</span>
+<span class="kw">const</span> desktopArea = <span class="fn">h</span>(<span class="st">"div"</span>, { id: <span class="st">"desktop-area"</span> });
+<span class="cm">// CSS: #desktop-area { flex: 1; background: #008080; position: relative; }</span>
+
+<span class="cm">// 任务栏：固定 40px 高度</span>
+<span class="kw">const</span> taskbar = Taskbar.<span class="fn">create</span>();
+<span class="cm">// CSS: .taskbar { height: 40px; flex-shrink: 0; background: #c0c0c0; }</span>
+
+container.<span class="fn">appendChild</span>(desktopArea);
+container.<span class="fn">appendChild</span>(taskbar);</code></pre>
+
+<div class="diagram">┌──────────────────────────────┐
+│     #desktop-area            │  ← flex: 1, background: #008080
+│     (teal 背景)               │     窗口都是 position:absolute 在这里面
+│                              │
+│                              │
+│                              │
+├──────────────────────────────┤
+│  .taskbar                    │  ← height: 40px, background: #c0c0c0
+│  [Start] [窗口按钮]    [时钟] │     flex-shrink: 0 (不压缩)
+└──────────────────────────────┘</div>
+
+<h3 id="ch4-2">4.2 桌面图标</h3>
+<p>图标是一个 <code>button</code> 元素，用 <code>dblclick</code> 打开对应窗口：</p>
+
+<pre><code><span class="kw">const</span> icon = <span class="fn">h</span>(<span class="st">"button"</span>, {
+  className: <span class="st">"desktop-icon"</span>,
+  onDblclick: (e) => {
+    e.<span class="fn">stopPropagation</span>();  <span class="cm">// 防止冒泡到桌面的 click 事件</span>
+    App.<span class="fn">openApp</span>(<span class="st">"my-computer"</span>);
+  }
+},
+  <span class="fn">h</span>(<span class="st">"div"</span>, { innerHTML: <span class="st">"&lt;svg...&gt;"</span> }),  <span class="cm">// SVG 图标</span>
+  <span class="fn">h</span>(<span class="st">"span"</span>, <span class="kw">null</span>, <span class="st">"My Computer"</span>)        <span class="cm">// 图标文字</span>
+);</code></pre>
+
+<h3 id="ch4-3">4.3 任务栏与时钟</h3>
+<p>任务栏是一个 <code>const</code> 单例对象。它的按钮区域在每次打开/关闭窗口时用 <code>updateButtons()</code> 重建，但外壳（Start按钮、时钟）只创建一次：</p>
+
+<pre><code><span class="kw">const</span> Taskbar = {
+  btnArea: <span class="kw">null</span>,  <span class="cm">// 按钮容器</span>
+
+  <span class="fn">create</span>() {
+    <span class="kw">this</span>.btnArea = <span class="fn">h</span>(<span class="st">"div"</span>, { <span class="cm">/* flex:1 占满中间 */</span> });
+    <span class="cm">// 返回组装好的任务栏元素</span>
+  },
+
+  <span class="cm">// 只重建按钮区域 — 不碰 Start 和时钟</span>
+  <span class="fn">updateButtons</span>() {
+    <span class="kw">this</span>.btnArea.innerHTML = <span class="st">""</span>;  <span class="cm">// 只清空按钮区域</span>
+    <span class="kw">for</span> (<span class="kw">const</span> id <span class="kw">of</span> App.state.openList) {
+      <span class="cm">// 为每个窗口创建一个任务栏按钮</span>
+      <span class="kw">const</span> isActive = App.state.activeWin === id;
+      <span class="kw">this</span>.btnArea.<span class="fn">appendChild</span>(<span class="fn">h</span>(<span class="st">"button"</span>, {
+        className: <span class="st">"taskbar-btn"</span> + (isActive ? <span class="st">" active"</span> : <span class="st">""</span>),
+        onClick: () => <span class="cm">/* 切换窗口 */</span>
+      }, info.title));
+    }
+  }
+};</code></pre>
+
+<p>任务栏按钮的关键 CSS — 实心块状外观：</p>
+<pre><code>.taskbar-btn {
+  <span class="at">background</span>: <span class="st">#c0c0c0</span>;
+  <span class="at">border</span>: <span class="nu">2px</span> outset <span class="st">#dfdfdf</span>;  <span class="cm">/* 凸起效果 */</span>
+  <span class="at">height</span>: <span class="nu">26px</span>;
+}
+.taskbar-btn.active {
+  <span class="at">border</span>: <span class="nu">2px</span> inset <span class="st">#808080</span>;   <span class="cm">/* 按下效果 */</span>
+  <span class="at">background</span>: <span class="st">#b0b0b0</span>;
+}</code></pre>
+
+
+<!-- ==================== CH5 ==================== -->
+<h2 id="ch5">第五章：窗口系统（核心）</h2>
+<p>这是整个项目最关键的部分。</p>
+
+<h3 id="ch5-1">5.1 窗口外壳 Shell</h3>
+<p>每个窗口都由 <code>createWindowShell()</code> 创建，返回一组控制方法。窗口内容放进 <code>bodyEl</code>：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">createWindowShell</span>(id, title, opts, pos, { onClose, onMinimize }) {
+  <span class="cm">// bodyEl 是内容容器 — 各应用往这里塞自己的 UI</span>
+  <span class="kw">const</span> bodyEl = <span class="fn">h</span>(<span class="st">"div"</span>, {
+    className: <span class="st">"window-body"</span>,
+    style: { margin: <span class="st">"0"</span>, flex: <span class="st">"1"</span>, display: <span class="st">"flex"</span>, flexDirection: <span class="st">"column"</span> }
+  });
+
+  <span class="cm">// 标题栏</span>
+  <span class="kw">const</span> titleBar = <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"title-bar"</span> }, <span class="cm">/* ... */</span>);
+
+  <span class="cm">// 窗口主体 — 用 transform 定位</span>
+  <span class="kw">const</span> el = <span class="fn">h</span>(<span class="st">"div"</span>, {
+    className: <span class="st">"window"</span>,
+    style: {
+      position: <span class="st">"absolute"</span>,
+      transform: <span class="st">`translate(${pos.x}px, ${pos.y}px)`</span>,
+      display: <span class="st">"flex"</span>, flexDirection: <span class="st">"column"</span>,
+    }
+  }, titleBar, bodyEl);
+
+  <span class="cm">// 返回控制接口</span>
+  <span class="kw">return</span> {
+    el,       <span class="cm">// DOM 元素</span>
+    bodyEl,   <span class="cm">// 内容容器</span>
+    <span class="fn">setTitle</span>(t) { titleText.textContent = t; },
+    <span class="fn">setActive</span>(isActive) { <span class="cm">/* 切换标题栏样式 */</span> },
+    <span class="fn">setZ</span>(z) { el.style.zIndex = z; },
+    <span class="fn">show</span>() { el.style.display = <span class="st">"flex"</span>; },
+    <span class="fn">hide</span>() { el.style.display = <span class="st">"none"</span>; },
+    <span class="fn">destroy</span>() { el.<span class="fn">remove</span>(); },
+  };
+}</code></pre>
+
+<div class="concept">
+<strong>💡 为什么返回方法而不是直接操作？</strong><br>
+这种模式叫 <strong>"接口隔离"</strong>。外部代码只通过 <code>show()/hide()/setZ()</code> 等方法操作窗口，不需要知道内部 DOM 结构。以后你想改窗口内部实现（比如换成 CSS class 切换），只需要改 shell 内部，不影响任何调用方。
+</div>
+
+<h3 id="ch5-2">5.2 拖拽系统</h3>
+<p>拖拽是 mousedown → mousemove → mouseup 三件套。关键设计：全局只有<strong>一个</strong> mousemove 监听器，不会因为窗口多了而堆积事件：</p>
+
+<pre><code><span class="kw">const</span> Interaction = {
+  mode: <span class="kw">null</span>,       <span class="cm">// null | "drag" | "resize"</span>
+  targetEl: <span class="kw">null</span>,   <span class="cm">// 当前被操作的窗口 DOM</span>
+  posObj: <span class="kw">null</span>,     <span class="cm">// 窗口的位置对象 { x, y, w, h }</span>
+  offsetX: <span class="nu">0</span>,
+  offsetY: <span class="nu">0</span>,
+
+  <span class="cm">// 在标题栏上注册 mousedown</span>
+  <span class="fn">makeDraggable</span>(windowEl, handleEl, posObj) {
+    handleEl.<span class="fn">addEventListener</span>(<span class="st">"mousedown"</span>, (e) => {
+      <span class="kw">if</span> (e.target.tagName === <span class="st">"BUTTON"</span>) <span class="kw">return</span>; <span class="cm">// 点按钮别拖</span>
+      <span class="kw">this</span>.mode = <span class="st">"drag"</span>;
+      <span class="kw">this</span>.targetEl = windowEl;
+      <span class="kw">this</span>.posObj = posObj;
+      <span class="kw">this</span>.offsetX = e.clientX - posObj.x;
+      <span class="kw">this</span>.offsetY = e.clientY - posObj.y;
+    });
+  },
+
+  <span class="cm">// 只调一次 — 全局监听</span>
+  <span class="fn">init</span>() {
+    document.<span class="fn">addEventListener</span>(<span class="st">"mousemove"</span>, (e) => {
+      <span class="kw">if</span> (<span class="kw">this</span>.mode === <span class="st">"drag"</span>) {
+        <span class="kw">this</span>.posObj.x = e.clientX - <span class="kw">this</span>.offsetX;
+        <span class="kw">this</span>.posObj.y = e.clientY - <span class="kw">this</span>.offsetY;
+        <span class="kw">this</span>.targetEl.style.transform =
+          <span class="st">`translate(${this.posObj.x}px, ${this.posObj.y}px)`</span>;
+      }
+    });
+    document.<span class="fn">addEventListener</span>(<span class="st">"mouseup"</span>, () => {
+      <span class="kw">this</span>.mode = <span class="kw">null</span>;
+    });
+  }
+};</code></pre>
+
+<div class="warn">
+<strong>⚠️ 开窗动画不能用 transform</strong><br>
+如果窗口出现动画用了 <code>animation: ... transform: scale(0.95)</code>，它会在动画期间<strong>覆盖</strong>定位用的 <code>transform: translate(x, y)</code>，导致窗口先闪到 (0,0) 位置。解决方案：动画只用 <code>opacity</code>：<br>
+<code>@keyframes windowFadeIn { from { opacity:0 } to { opacity:1 } }</code>
+</div>
+
+<h3 id="ch5-3">5.3 缩放与最大化</h3>
+<p>缩放原理同拖拽，但要区分 8 个方向（n/s/e/w/ne/nw/se/sw）。每个方向是一个隐形的 <code>&lt;div&gt;</code> 贴在窗口边缘：</p>
+
+<pre><code><span class="cm">/* CSS — 以东南角为例 */</span>
+.resize-se {
+  <span class="at">position</span>: absolute;
+  <span class="at">bottom</span>: <span class="nu">-4px</span>;
+  <span class="at">right</span>: <span class="nu">-4px</span>;
+  <span class="at">width</span>: <span class="nu">12px</span>;
+  <span class="at">height</span>: <span class="nu">12px</span>;
+  <span class="at">cursor</span>: se-resize;
+}</code></pre>
+
+<p>最大化是保存当前位置/尺寸，然后设为桌面区域的宽高：</p>
+<pre><code><span class="fn">toggleMaximize</span>() {
+  <span class="kw">if</span> (pos.maximized) {
+    <span class="cm">// 恢复</span>
+    <span class="kw">const</span> r = pos.savedRect;
+    pos.x = r.x; pos.y = r.y; pos.w = r.w; pos.h = r.h;
+    <span class="cm">// 更新 DOM style...</span>
+  } <span class="kw">else</span> {
+    <span class="cm">// 保存当前状态，然后撑满</span>
+    pos.savedRect = { x:pos.x, y:pos.y, w:pos.w, h:pos.h };
+    pos.maximized = <span class="kw">true</span>;
+    <span class="kw">const</span> da = document.<span class="fn">getElementById</span>(<span class="st">"desktop-area"</span>);
+    pos.w = da.clientWidth;
+    pos.h = da.clientHeight;
+    <span class="cm">// 更新 DOM style...</span>
+  }
+}</code></pre>
+
+<h3 id="ch5-4">5.4 窗口层级管理</h3>
+<p>用一个递增的 <code>highZ</code> 计数器管理层级。点击窗口 → <code>bringToFront()</code> → highZ++，设为新值：</p>
+
+<pre><code><span class="fn">bringToFront</span>(id) {
+  <span class="kw">this</span>.state.highZ++;
+  info.pos.z = <span class="kw">this</span>.state.highZ;
+  info.shell.<span class="fn">setZ</span>(<span class="kw">this</span>.state.highZ);  <span class="cm">// 修改 el.style.zIndex</span>
+  <span class="kw">this</span>.state.activeWin = id;
+  <span class="kw">this</span>.<span class="fn">_syncActive</span>();   <span class="cm">// 更新所有窗口的标题栏样式（active/inactive）</span>
+  Taskbar.<span class="fn">updateButtons</span>();  <span class="cm">// 更新任务栏按钮高亮</span>
+}</code></pre>
+
+
+<!-- ==================== CH6 ==================== -->
+<h2 id="ch6">第六章：虚拟文件系统</h2>
+
+<h3 id="ch6-1">6.1 数据结构设计</h3>
+<p>文件系统就是一个嵌套的 JavaScript 对象。每个条目是 <code>{ name, type:"folder"|"file", children?, content? }</code>：</p>
+
+<pre><code><span class="kw">const</span> FileSystem = {
+  drives: {
+    <span class="st">"C:"</span>: [
+      { name: <span class="st">"Windows"</span>, type: <span class="st">"folder"</span>, children: [
+        { name: <span class="st">"System"</span>, type: <span class="st">"folder"</span>, children: [
+          { name: <span class="st">"kernel32.dll"</span>, type: <span class="st">"file"</span>, content: <span class="st">"[Binary]"</span> },
+        ]},
+      ]},
+      { name: <span class="st">"Documents"</span>, type: <span class="st">"folder"</span>, children: [
+        { name: <span class="st">"todo.txt"</span>, type: <span class="st">"file"</span>, content: <span class="st">"Buy milk..."</span> },
+      ]},
+    ],
+    <span class="st">"D:"</span>: [ <span class="cm">/* ... */</span> ],
+  },
+};</code></pre>
+
+<h3 id="ch6-2">6.2 路径解析</h3>
+<p><code>resolve(drive, pathArray)</code> 沿路径数组逐层深入找到目标文件夹：</p>
+
+<pre><code><span class="fn">resolve</span>(drive, pathArray) {
+  <span class="kw">let</span> entries = <span class="kw">this</span>.drives[drive];
+  <span class="kw">for</span> (<span class="kw">const</span> name <span class="kw">of</span> pathArray) {
+    <span class="kw">const</span> folder = entries.<span class="fn">find</span>(e => e.name === name && e.type === <span class="st">"folder"</span>);
+    <span class="kw">if</span> (!folder) <span class="kw">return</span> [];
+    entries = folder.children;
+  }
+  <span class="kw">return</span> entries;  <span class="cm">// 返回该文件夹下的所有条目</span>
+}
+
+<span class="cm">// 例如：resolve("C:", ["Documents"]) → 返回 Documents 下的文件列表</span></code></pre>
+
+<h3 id="ch6-3">6.3 文件读写</h3>
+<pre><code><span class="fn">saveFile</span>(drive, pathArray, fileName, content) {
+  <span class="kw">const</span> folder = <span class="kw">this</span>.<span class="fn">resolve</span>(drive, pathArray);
+  <span class="kw">const</span> existing = folder.<span class="fn">find</span>(e => e.name === fileName);
+  <span class="kw">if</span> (existing) {
+    existing.content = content;  <span class="cm">// 覆盖</span>
+  } <span class="kw">else</span> {
+    folder.<span class="fn">push</span>({ name: fileName, type: <span class="st">"file"</span>, content });  <span class="cm">// 新建</span>
+  }
+}</code></pre>
+
+
+<!-- ==================== CH7 ==================== -->
+<h2 id="ch7">第七章：文件管理器</h2>
+
+<h3 id="ch7-1">7.1 Explorer 布局</h3>
+<p>文件管理器窗口由固定部分（菜单栏、工具栏、地址栏、状态栏）和可变部分（侧边栏、文件区域）组成。固定部分创建一次不动，可变部分在导航时重建内容：</p>
+
+<div class="diagram">┌─────────────────────────────────┐ ← 窗口 Shell（标题栏、拖拽）
+│ [File] [Edit] [View] [Tools]    │ ← 创建一次
+│ [◀ Back] [Fwd ▶] [⬆ Up]        │ ← 创建一次，disabled 属性动态更新
+│ Address: [C:\Documents        ] │ ← 创建一次，value 动态更新
+├────────────┬────────────────────┤
+│  📁 C:\    │  📁 Work           │
+│  ├ Windows │  📄 todo.txt       │ ← sidebar 和 filePane 的 innerHTML
+│  ├ Docs ◄━━│  📄 notes.txt      │    在每次导航时被重建
+│  └ ...     │                    │    但容器 DOM 元素本身不动
+├────────────┴────────────────────┤
+│ 3 object(s) | "todo.txt" sel.   │ ← statusText.textContent 动态更新
+└─────────────────────────────────┘</div>
+
+<h3 id="ch7-2">7.2 文件夹树（侧边栏）</h3>
+<p>用 98.css 的 <code>.tree-view</code> 和 HTML <code>&lt;details&gt;</code>/<code>&lt;summary&gt;</code> 实现可展开的树：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">buildTree</span>(items, parentPath, drv) {
+  <span class="kw">const</span> ul = <span class="fn">h</span>(<span class="st">"ul"</span>);
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> items.<span class="fn">filter</span>(e => e.type === <span class="st">"folder"</span>)) {
+    <span class="kw">const</span> entryPath = [...parentPath, entry.name];
+    <span class="kw">const</span> li = <span class="fn">h</span>(<span class="st">"li"</span>);
+
+    <span class="kw">const</span> det = <span class="fn">h</span>(<span class="st">"details"</span>);
+    det.<span class="fn">appendChild</span>(<span class="fn">h</span>(<span class="st">"summary"</span>, {
+      onClick: (e) => {
+        e.<span class="fn">preventDefault</span>();         <span class="cm">// 阻止默认展开行为</span>
+        <span class="fn">navigateTo</span>(drv, entryPath);  <span class="cm">// 改为导航到该路径</span>
+      }
+    }, entry.name));
+
+    <span class="cm">// 递归构建子树</span>
+    det.<span class="fn">appendChild</span>(<span class="fn">buildTree</span>(entry.children, entryPath, drv));
+    li.<span class="fn">appendChild</span>(det);
+    ul.<span class="fn">appendChild</span>(li);
+  }
+  <span class="kw">return</span> ul;
+}</code></pre>
+
+<h3 id="ch7-3">7.3 文件网格与导航</h3>
+<p>导航状态用一个对象管理，包含历史记录以支持前进/后退：</p>
+
+<pre><code><span class="kw">const</span> nav = {
+  drive: <span class="st">"C:"</span>,
+  path: [],          <span class="cm">// 当前路径，如 ["Documents", "Work"]</span>
+  selected: <span class="kw">null</span>,    <span class="cm">// 当前选中的文件名</span>
+  history: [...],    <span class="cm">// 导航历史（前进/后退用）</span>
+  histIdx: <span class="nu">0</span>,
+};
+
+<span class="kw">function</span> <span class="fn">navigateTo</span>(drive, path) {
+  nav.drive = drive;
+  nav.path = [...path];
+  nav.history.<span class="fn">push</span>({ drive, path: [...path] });
+  nav.histIdx = nav.history.length - <span class="nu">1</span>;
+  <span class="fn">refresh</span>();  <span class="cm">// 只重建 sidebar 和 filePane 的内容</span>
+}</code></pre>
+
+
+<!-- ==================== CH8 ==================== -->
+<h2 id="ch8">第八章：记事本</h2>
+
+<h3 id="ch8-1">8.1 Textarea 持久化</h3>
+<p>记事本的核心就是一个 <code>&lt;textarea&gt;</code>。因为我们的架构是"创建一次不销毁"，textarea 在窗口存活期间始终是同一个 DOM 元素，用户的输入永远不会丢失：</p>
+
+<pre><code><span class="kw">const</span> textarea = <span class="fn">h</span>(<span class="st">"textarea"</span>, {
+  style: { width: <span class="st">"100%"</span>, flex: <span class="st">"1"</span>, resize: <span class="st">"none"</span>, fontFamily: <span class="st">"monospace"</span> },
+  onKeydown: (e) => {
+    <span class="kw">if</span> ((e.ctrlKey || e.metaKey) && e.key === <span class="st">"s"</span>) {
+      e.<span class="fn">preventDefault</span>();  <span class="cm">// 阻止浏览器默认的保存行为</span>
+      <span class="fn">doSave</span>();
+    }
+  },
+});
+textarea.value = content;</code></pre>
+
+<h3 id="ch8-2">8.2 保存到虚拟文件系统</h3>
+<pre><code><span class="kw">function</span> <span class="fn">doSave</span>() {
+  FileSystem.<span class="fn">saveFile</span>(<span class="st">"C:"</span>, [<span class="st">"Documents"</span>], fileName, textarea.value);
+  statusField.textContent = <span class="st">"✔ Saved to C:\\Documents\\"</span> + fileName;
+  <span class="fn">setTimeout</span>(() => {
+    statusField.textContent = textarea.value.<span class="fn">split</span>(<span class="st">"\\n"</span>).length + <span class="st">" line(s)"</span>;
+  }, <span class="nu">2000</span>);
+}</code></pre>
+
+
+<!-- ==================== CH9 ==================== -->
+<h2 id="ch9">第九章：浏览器</h2>
+
+<h3 id="ch9-1">9.1 iframe 加载真实网页</h3>
+<p>每个标签页拥有一个 <code>&lt;iframe&gt;</code>。输入 URL 后自动补全 <code>https://</code> 并设置 <code>iframe.src</code>：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">navigate</span>(rawUrl) {
+  <span class="kw">let</span> url = rawUrl.<span class="fn">trim</span>();
+  <span class="kw">if</span> (!/^https?:\/\//.<span class="fn">test</span>(url)) url = <span class="st">"https://"</span> + url;
+
+  <span class="cm">// 创建 iframe（只在第一次导航时创建，后续复用）</span>
+  <span class="kw">if</span> (!tab.iframe) {
+    tab.iframe = <span class="fn">h</span>(<span class="st">"iframe"</span>, {
+      style: { width:<span class="st">"100%"</span>, height:<span class="st">"100%"</span>, border:<span class="st">"none"</span> },
+      sandbox: <span class="st">"allow-scripts allow-same-origin allow-forms allow-popups"</span>,
+    });
+    contentArea.<span class="fn">appendChild</span>(tab.iframe);
+  }
+  tab.iframe.src = url;
+}</code></pre>
+
+<h3 id="ch9-2">9.2 标签页系统</h3>
+<p>切换标签页时，只做 <code>display:none/block</code>，不销毁 iframe，这样已加载的页面不会重新加载：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">showActiveContent</span>() {
+  <span class="cm">// 隐藏所有 iframe</span>
+  <span class="kw">for</span> (<span class="kw">const</span> t <span class="kw">of</span> tabs) {
+    <span class="kw">if</span> (t.iframe) t.iframe.style.display = <span class="st">"none"</span>;
+  }
+  <span class="cm">// 显示当前 tab 的 iframe</span>
+  <span class="kw">const</span> tab = tabs[activeTab];
+  <span class="kw">if</span> (tab.iframe) tab.iframe.style.display = <span class="st">""</span>;
+}</code></pre>
+
+<h3 id="ch9-3">9.3 连接失败的错误页面</h3>
+<p>很多网站通过 <code>X-Frame-Options</code> 头部禁止 iframe 嵌入。我们用 <code>setTimeout</code> 做超时检测，8 秒内没有 <code>onload</code> 触发就显示经典的 IE 错误页面：</p>
+
+<pre><code><span class="cm">// 8 秒超时检测</span>
+<span class="fn">setTimeout</span>(() => {
+  <span class="kw">if</span> (!settled && tab.state === <span class="st">"loading"</span>) {
+    tab.state = <span class="st">"error"</span>;
+    tab.errorEl.innerHTML = <span class="st">""</span>;
+    tab.errorEl.<span class="fn">appendChild</span>(<span class="fn">buildErrorPage</span>(domain, url));
+    <span class="cm">// buildErrorPage() 生成经典的 "The page cannot be displayed" 界面</span>
+  }
+}, <span class="nu">8000</span>);</code></pre>
+
+
+<!-- ==================== CH10 ==================== -->
+<h2 id="ch10">第十章：右键菜单与开始菜单</h2>
+
+<p><strong>右键菜单</strong>是单例的 — <code>show()</code> 先调用 <code>hide()</code> 清掉旧菜单，保证同一时间只有一个：</p>
+
+<pre><code><span class="kw">const</span> ContextMenu = {
+  el: <span class="kw">null</span>,
+  <span class="fn">show</span>(x, y, items) {
+    <span class="kw">this</span>.<span class="fn">hide</span>();  <span class="cm">// ← 关键：先清掉旧的</span>
+    <span class="kw">const</span> menu = <span class="fn">h</span>(<span class="st">"div"</span>, { <span class="cm">/* 创建菜单 */</span> });
+    document.body.<span class="fn">appendChild</span>(menu);
+    <span class="kw">this</span>.el = menu;
+  },
+  <span class="fn">hide</span>() {
+    <span class="kw">if</span> (<span class="kw">this</span>.el) { <span class="kw">this</span>.el.<span class="fn">remove</span>(); <span class="kw">this</span>.el = <span class="kw">null</span>; }
+  }
+};</code></pre>
+
+<div class="warn">
+<strong>⚠️ mousedown vs click 陷阱</strong><br>
+全局用 <code>document.addEventListener("mousedown", () => { ContextMenu.hide(); StartMenu.hide(); })</code> 来关闭菜单。但 <code>mousedown</code> 比 <code>click</code> 先触发！如果菜单/开始菜单没有阻止 mousedown 冒泡，点击菜单项时菜单会先被关掉，click 就打不中了。<br><br>
+解决方案：菜单容器要同时加 <code>onMousedown: (e) => e.stopPropagation()</code>。
+</div>
+
+
+<!-- ==================== CH11 ==================== -->
+<h2 id="ch11">第十一章：关机/重启/待机</h2>
+
+<p>Win98 的 Shut Down 对话框有三个单选按钮：Shut down / Restart / Stand by。用 <code>_createDialog()</code> 生成模态对话框：</p>
+
+<pre><code><span class="cm">// 关机 → 过渡画面 → 经典黑屏</span>
+<span class="fn">_doShutDown</span>() {
+  <span class="cm">// 1. 蓝屏 "Windows is shutting down..."（2 秒）</span>
+  <span class="kw">const</span> screen = <span class="fn">h</span>(<span class="st">"div"</span>, { className: <span class="st">"screen-overlay transition-screen"</span> },
+    <span class="fn">h</span>(<span class="st">"p"</span>, <span class="kw">null</span>, <span class="st">"Windows is shutting down..."</span>),
+  );
+  document.body.<span class="fn">appendChild</span>(screen);
+
+  <span class="fn">setTimeout</span>(() => {
+    screen.<span class="fn">remove</span>();
+    <span class="kw">this</span>.<span class="fn">_destroyAll</span>();  <span class="cm">// 关闭所有窗口</span>
+
+    <span class="cm">// 2. 经典橙字黑屏 + Power On 按钮</span>
+    <span class="kw">this</span>.<span class="fn">_showSafeToTurnOff</span>();
+  }, <span class="nu">2000</span>);
+}
+
+<span class="cm">// 待机 → 纯黑屏，点击唤醒，直接回桌面</span>
+<span class="fn">_doStandby</span>() {
+  <span class="kw">const</span> screen = <span class="fn">h</span>(<span class="st">"div"</span>, {
+    style: { background: <span class="st">"#000"</span>, <span class="cm">/* 满屏黑 */</span> },
+    onClick: () => { <span class="fn">setupDesktop</span>(); }  <span class="cm">// 点击直接恢复</span>
+  });
+}</code></pre>
+
+
+<!-- ==================== CH12 ==================== -->
+<h2 id="ch12">第十二章：架构总结与简历包装</h2>
+
+<h3>模块交互流程</h3>
+<div class="diagram">用户双击桌面图标
+    ↓
+App.openApp("my-computer")
+    ↓
+createMyComputerWindow(id)      → 创建 WindowShell + 内容
+    ↓
+App._register(id, win)
+    ├── state.openList.push(id)  → 记录窗口 ID
+    ├── desktopArea.appendChild() → 追加 DOM 元素
+    ├── _syncActive()            → 更新所有窗口标题栏样式
+    └── Taskbar.updateButtons()  → 重建任务栏按钮</div>
+
+<h3>面试时可以讲的技术点</h3>
+<table>
+<tr><th>技术点</th><th>怎么讲</th></tr>
+<tr><td>持久化 DOM 策略</td><td>"我没用虚拟 DOM 框架，而是自己实现了 DOM 元素的持久化管理。窗口创建后保持存活，通过修改属性而非重新渲染来更新 UI，避免了拖拽句柄断开和输入丢失的问题。"</td></tr>
+<tr><td>事件委托与冒泡控制</td><td>"全局只注册一组 mousemove/mouseup 监听器来处理所有窗口的拖拽和缩放，通过 stopPropagation 精确控制事件流，解决了菜单提前关闭等边界问题。"</td></tr>
+<tr><td>模块化设计</td><td>"整个应用拆分为 10 个模块，每个模块职责单一：Interaction 管拖拽，WindowShell 管窗口框架，FileSystem 管数据。模块间通过明确的接口通信。"</td></tr>
+<tr><td>虚拟文件系统</td><td>"用嵌套对象模拟了一个支持读写的文件树，记事本可以创建和保存文件，文件管理器可以浏览和打开。"</td></tr>
+<tr><td>iframe 安全处理</td><td>"浏览器组件用 iframe 加载真实网页，通过 sandbox 属性限制权限，用超时检测处理 X-Frame-Options 拒绝连接的情况，并展示经典错误页面。"</td></tr>
+</table>
+
+<h3>建议扩展方向</h3>
+<p>如果你想让项目更出彩，可以考虑加上：</p>
+<p>
+<strong>扫雷游戏</strong> — 经典 Win98 标配，用 canvas 或 DOM 实现<br>
+<strong>画图板</strong> — 用 canvas 做一个简单的 Paint<br>
+<strong>计算器</strong> — 功能简单但 UI 还原度高<br>
+<strong>LocalStorage 持久化</strong> — 关掉页面再打开，文件和设置还在<br>
+<strong>壁纸更换</strong> — 在控制面板里选壁纸<br>
+<strong>多主题</strong> — 支持切换 Windows 95 / Windows 2000 样式
+</p>
+
+<div style="margin-top:48px; padding:24px; background:#f0f0ee; border-radius:8px; text-align:center">
+  <p style="font-size:14px; color:#666; margin-bottom:8px">现在，打开你的编辑器，从第一章的空 HTML 开始敲吧。</p>
+  <p style="font-size:18px; font-weight:700; color:var(--step-bg)">Good luck, and have fun! 🚀</p>
+</div>
+
+</main>
+</body>
+</html>

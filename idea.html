@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARG 解密游戏 · 完整框架设计</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080d;
+    --bg2: #0e0e16;
+    --card: #111119;
+    --border: #1a1a28;
+    --accent: #e94560;
+    --blue: #4a9eff;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+    --cyan: #22d3ee;
+    --text: #d4d4d8;
+    --muted: #52525b;
+    --dim: #27272a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(233,69,96,.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(167,139,250,.04) 0%, transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+
+  .wrap { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:60px 28px 120px; }
+
+  /* ===== HEADER ===== */
+  .hero { text-align:center; margin-bottom:72px; }
+  .hero .mono {
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:4px;
+    text-transform:uppercase; color:var(--accent); margin-bottom:20px;
+  }
+  .hero h1 {
+    font-size:38px; font-weight:900; letter-spacing:-1px; margin-bottom:10px;
+    background:linear-gradient(135deg,#fff 30%,#666);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .hero .sub { font-size:14px; color:var(--muted); font-weight:300; }
+
+  /* ===== SECTION ===== */
+  .section { margin-bottom:64px; }
+  .section-head {
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:24px; padding-bottom:12px;
+    border-bottom:1px solid var(--border);
+  }
+  .section-head .num {
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;
+    color:var(--bg); background:var(--accent); padding:3px 10px; border-radius:3px;
+    letter-spacing:1px;
+  }
+  .section-head h2 { font-size:22px; font-weight:700; color:#fff; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:24px 28px; margin-bottom:16px;
+    transition: border-color .3s;
+  }
+  .card:hover { border-color:rgba(255,255,255,.08); }
+  .card h3 { font-size:16px; font-weight:700; margin-bottom:10px; color:#fff; }
+  .card p, .card li { font-size:13.5px; color:#a1a1aa; line-height:1.8; }
+  .card ul { padding-left:18px; margin-top:8px; }
+  .card li { margin-bottom:6px; }
+  .card li b { color:var(--text); }
+
+  .card-accent { border-left:3px solid var(--accent); }
+  .card-blue { border-left:3px solid var(--blue); }
+  .card-green { border-left:3px solid var(--green); }
+  .card-purple { border-left:3px solid var(--purple); }
+  .card-yellow { border-left:3px solid var(--yellow); }
+  .card-orange { border-left:3px solid var(--orange); }
+  .card-cyan { border-left:3px solid var(--cyan); }
+
+  /* ===== HIGHLIGHT BOX ===== */
+  .highlight {
+    background:rgba(233,69,96,.06); border:1px solid rgba(233,69,96,.15);
+    border-radius:6px; padding:18px 22px; margin:16px 0;
+    font-size:13.5px; color:#e4a0ad; line-height:1.8;
+  }
+  .highlight b { color:var(--accent); }
+  .highlight.blue {
+    background:rgba(74,158,255,.06); border-color:rgba(74,158,255,.15); color:#a0c8e4;
+  }
+  .highlight.blue b { color:var(--blue); }
+  .highlight.purple {
+    background:rgba(167,139,250,.06); border-color:rgba(167,139,250,.15); color:#c4b8e4;
+  }
+  .highlight.purple b { color:var(--purple); }
+  .highlight.green {
+    background:rgba(52,211,153,.06); border-color:rgba(52,211,153,.15); color:#a0e4c8;
+  }
+  .highlight.green b { color:var(--green); }
+
+  /* ===== TAGS ===== */
+  .tag {
+    display:inline-block; font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:1px; padding:3px 10px;
+    border-radius:3px; margin-right:6px; margin-top:10px;
+    border:1px solid;
+  }
+  .tag-r { color:var(--accent); border-color:rgba(233,69,96,.3); }
+  .tag-b { color:var(--blue); border-color:rgba(74,158,255,.3); }
+  .tag-g { color:var(--green); border-color:rgba(52,211,153,.3); }
+  .tag-p { color:var(--purple); border-color:rgba(167,139,250,.3); }
+  .tag-y { color:var(--yellow); border-color:rgba(251,191,36,.3); }
+
+  /* ===== FLOW TIMELINE ===== */
+  .flow { position:relative; padding-left:36px; margin:24px 0; }
+  .flow::before {
+    content:''; position:absolute; left:10px; top:8px; bottom:8px; width:2px;
+    background:linear-gradient(to bottom, var(--accent), var(--purple), var(--muted));
+  }
+  .flow-node { position:relative; margin-bottom:24px; }
+  .flow-node::before {
+    content:''; position:absolute; left:-30px; top:8px;
+    width:12px; height:12px; border-radius:50%; border:2.5px solid;
+    background:var(--bg);
+  }
+  .flow-node.fn-r::before { border-color:var(--accent); }
+  .flow-node.fn-b::before { border-color:var(--blue); }
+  .flow-node.fn-g::before { border-color:var(--green); }
+  .flow-node.fn-p::before { border-color:var(--purple); }
+  .flow-node.fn-y::before { border-color:var(--yellow); }
+  .flow-node.fn-o::before { border-color:var(--orange); }
+  .flow-node .fn-time {
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+    margin-bottom:4px;
+  }
+  .flow-node .fn-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:4px; }
+  .flow-node .fn-desc { font-size:12.5px; color:#71717a; line-height:1.7; }
+
+  /* ===== TABLE ===== */
+  .tbl { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+  .tbl th {
+    text-align:left; padding:10px 14px; background:rgba(255,255,255,.03);
+    border-bottom:1px solid var(--border); color:var(--muted);
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px;
+    text-transform:uppercase; font-weight:600;
+  }
+  .tbl td {
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    color:#a1a1aa; vertical-align:top;
+  }
+  .tbl td b { color:var(--text); }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    text-align:center; margin:56px 0 48px; position:relative;
+  }
+  .divider::before {
+    content:''; position:absolute; left:0; right:0; top:50%; height:1px;
+    background:var(--border);
+  }
+  .divider span {
+    position:relative; display:inline-block; background:var(--bg);
+    padding:6px 24px; font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    border:1px solid var(--border); border-radius:4px; color:var(--muted);
+  }
+
+  /* ===== PATH COMPARISON ===== */
+  .paths { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:16px 0; }
+  .path-card {
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:20px; border-top:3px solid;
+  }
+  .path-card h4 { font-size:14px; font-weight:700; margin-bottom:10px; }
+  .path-card p { font-size:12.5px; color:#71717a; line-height:1.7; }
+  .path-a { border-top-color:var(--accent); }
+  .path-a h4 { color:var(--accent); }
+  .path-b { border-top-color:var(--blue); }
+  .path-b h4 { color:var(--blue); }
+  .path-c { border-top-color:var(--green); }
+  .path-c h4 { color:var(--green); }
+
+  @media(max-width:700px) {
+    .paths { grid-template-columns:1fr; }
+    .hero h1 { font-size:26px; }
+  }
+
+  /* ===== CHAT MOCK ===== */
+  .chat-box {
+    background:#1a1a24; border-radius:8px; padding:16px 20px; margin:12px 0;
+    font-size:13px; border:1px solid var(--border);
+  }
+  .chat-msg { margin-bottom:10px; }
+  .chat-msg .chat-name { font-size:11px; font-weight:600; margin-bottom:2px; }
+  .chat-msg .chat-text { color:#a1a1aa; }
+  .chat-name-a { color:var(--green); }
+  .chat-name-b { color:var(--blue); }
+  .chat-name-sys { color:var(--accent); font-style:italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ==================== HEADER ==================== -->
+<div class="hero">
+  <div class="mono">Final Framework v1.0</div>
+  <h1>ARG 解密游戏 · 完整框架设计</h1>
+  <div class="sub">~2小时 · 单人解密 · 纯前端 · 全程日常化 · 恐惧后置 · 时间作为核心机制</div>
+</div>
+
+<!-- ==================== 1. CORE CONCEPT ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">01</span>
+    <h2>核心概念</h2>
+  </div>
+
+  <div class="card card-accent">
+    <h3>一句话概括</h3>
+    <p>玩家因朋友随手发来的一张照片，一步步进入一个叫 timegov 的神秘网站，在"前工作人员"的引导下探索一台旧电脑——直到发现引导你的东西不是人，而你做的每一步都在帮它完成某种仪式。你必须在最后关头意识到这一点，然后逃出来。</p>
+  </div>
+
+  <div class="card card-blue">
+    <h3>核心骗局结构</h3>
+    <p><b>玩家以为：</b>我在调查一个神秘网站的真相，一个好心的前员工在帮我。</p>
+    <p><b>实际上：</b>一个"东西"在利用我的好奇心，让我一步步完成它需要的操作。那个前员工早就不在了，GM账号被别的东西控制着。</p>
+    <p><b>细思极恐：</b>那张在小红书上刷到的自拍——照片中的女生是不是上一个被骗进来的人？</p>
+  </div>
+
+  <div class="highlight">
+    <b>设计哲学：</b>全程日常化。玩家在过程中只感到"好奇"和"有趣"。恐惧是游戏结束后、回想整个过程时才涌上来的。每一步都有完全日常的解释，只有当所有信息拼在一起时，那个日常的解释才会崩塌。
+  </div>
+</div>
+
+<!-- ==================== 2. TIME MECHANIC ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">02</span>
+    <h2>核心机制：时间</h2>
+  </div>
+
+  <p style="font-size:13.5px;color:#71717a;margin-bottom:20px;">
+    游戏名叫 timegov，骗局的破绽是时间，谜题机制围绕时间，玩家靠"时间不对"活下来。<br>时间贯穿始终，但玩家直到最后才理解它在说什么。
+  </p>
+
+  <div class="card card-purple">
+    <h3>机制 A · OS 内时间与现实不同步</h3>
+    <p>玩家进入模拟OS后，右下角的系统时钟显示的不是当前真实时间。</p>
+    <ul>
+      <li><b>刚进入时：</b>只差几分钟，几乎不会注意</li>
+      <li><b>探索中期：</b>差距扩大到几十分钟，细心的玩家开始察觉</li>
+      <li><b>后期：</b>OS时间在加速，明显在追赶某个"截止时刻"</li>
+      <li><b>到达截止时刻时：</b>某件不可逆的事情会发生（游戏的"死亡"条件）</li>
+    </ul>
+    <div class="highlight purple">
+      <b>纯前端实现：</b>JS获取 <code>new Date()</code> 作为基准，用一个加速系数计算OS内的"虚拟时间"。加速系数随玩家操作逐渐增大。OS右下角时钟实时更新显示虚拟时间。
+    </div>
+  </div>
+
+  <div class="card card-cyan">
+    <h3>机制 B · 同一凭证不同时间 = 不同结果</h3>
+    <p>玩家在 timegov 上获得的登录凭证（userid + 密码）在不同时间段输入，会进入不同版本的OS：</p>
+    <ul>
+      <li><b>白天版本（6:00-18:00）：</b>一个看起来正常的旧电脑桌面，文件内容偏向日常、工作相关</li>
+      <li><b>夜间版本（18:00-6:00）：</b>同一个桌面但某些文件不同，出现白天没有的文件夹，聊天记录更加诡异</li>
+      <li><b>某个特定时间窗口（如凌晨3:00-3:33）：</b>出现隐藏内容——真正GM留下的"遗言"文件只在这个时间段出现</li>
+    </ul>
+    <div class="highlight blue">
+      <b>纯前端实现：</b>登录时JS判断 <code>new Date().getHours()</code>，根据时间段加载不同的文件配置JSON。玩家第一次玩大概率是白天或正常时间，核心流程不受影响。但二刷或被暗示后在特定时间登录，会看到完全不同的内容——这增加了游戏的讨论价值和重玩性。
+    </div>
+  </div>
+
+  <div class="card card-yellow">
+    <h3>两个机制如何配合</h3>
+    <p>机制A是<b>游戏内的紧迫感</b>——OS时间在加速，你感觉到"有什么在倒计时"。<br>
+    机制B是<b>游戏外的探索层</b>——不同玩家在不同时间玩会有不同体验，制造讨论话题。</p>
+    <p>对于核心2小时流程，机制A是主线，机制B是增值层。一次游玩即可体验完整故事，但机制B让较真的玩家有东西可挖。</p>
+  </div>
+</div>
+
+<!-- ==================== 3. CHARACTER ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">03</span>
+    <h2>角色设定</h2>
+  </div>
+
+  <div class="card card-green">
+    <h3>💬 困告小狗（挚友）</h3>
+    <p><b>身份：</b>玩家久未联系的挚友，刷小红书时偶然看到那张照片并截图发给玩家。</p>
+    <p><b>弧线：</b>随手一发 → 有点好奇 → 开始认真了 → 不安 → 被卷入</p>
+    <p><b>功能：</b>① 情绪镜子（反映玩家应有的情绪） ② 提示系统（卡住时提供线索） ③ 后期成为独立的调查线</p>
+    <p><b>语言风格：</b>完全真实的微信聊天——碎片化、表情包、语气词、有时打错字</p>
+  </div>
+
+  <div class="card card-accent">
+    <h3>🖥️ "那个东西"（伪装成前员工）</h3>
+    <p><b>表面身份：</b>timegov 的前工作人员，拥有GM账号，声称发现网站突然复活所以在寻找同样注意到的人。</p>
+    <p><b>真实身份：</b>不明。可能是网站本身，可能是困在其中的什么东西。它利用GM账号的权限引导玩家进入OS、打开文件、执行操作。</p>
+    <p><b>行为特征（后期才能察觉的破绽）：</b></p>
+    <ul>
+      <li>回复间隔过于规律（不像人类的随机延迟）</li>
+      <li>消息时间戳有时早于玩家的操作（它在你做之前就知道你要做什么）</li>
+      <li>从不用语气词、表情包，语言过于"干净"</li>
+      <li>当玩家偏离"预定路径"时，会温和但坚定地引导回来</li>
+    </ul>
+  </div>
+
+  <div class="card card-blue">
+    <h3>👻 真正的前员工（已死/已消失）</h3>
+    <p><b>身份：</b>timegov 真正的管理员/开发者，在某个时间点"消失"了。</p>
+    <p><b>存在方式：</b>不直接出现。只通过OS里残留的文件、聊天记录、和一份被藏起来的"遗言"存在。</p>
+    <p><b>遗言核心内容：</b>"如果你看到这些，不要相信聊天框里的任何人。它不是我。关掉一切，现在就走。"</p>
+    <p><b>功能：</b>这是玩家"觉醒"的关键线索来源。</p>
+  </div>
+
+  <div class="card">
+    <h3>📸 照片中的女生</h3>
+    <p><b>身份：</b>整个游戏中从不直接出现也不说话的角色。</p>
+    <p><b>真相（后期揭示）：</b>她可能是上一个被骗进来的人。那张自拍不是普通的社交媒体照片——它是timegov系统里的一个"归档条目"泄漏到了外部，或者说，是"那个东西"主动投放出去的诱饵。</p>
+    <p><b>细思极恐：</b>她现在在哪里？她是否也曾在OS里翻看过更早之前某个人的文件？这是一个循环。</p>
+  </div>
+</div>
+
+<!-- ==================== 4. FLOW ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">04</span>
+    <h2>三幕流程</h2>
+  </div>
+
+  <!-- ACT 1 -->
+  <div class="divider"><span style="color:var(--green)">第一幕 · 水面下的形状 · 15-20 min</span></div>
+
+  <div class="flow">
+    <div class="flow-node fn-g">
+      <div class="fn-time">0:00 - 0:03</div>
+      <div class="fn-title">开场 · 困告小狗的消息</div>
+      <div class="fn-desc">日常闲聊 → wyb话题 → "给你发一张意义不明的照片" → 普通女生自拍，右下角半透明水印 timegov.net</div>
+    </div>
+    <div class="flow-node fn-g">
+      <div class="fn-time">0:03 - 0:06</div>
+      <div class="fn-title">互动聊天 · 讨论照片和水印</div>
+      <div class="fn-desc">玩家通过预设选项与困告小狗对话，讨论水印是什么，决定去搜一下</div>
+    </div>
+    <div class="flow-node fn-y">
+      <div class="fn-time">0:06 - 0:09</div>
+      <div class="fn-title">发帖询问 · "有人知道 timegov 吗？"</div>
+      <div class="fn-desc">模拟社交平台发帖，帖子下有水帖和关键回复混在一起，获得 timegov 入口链接</div>
+    </div>
+    <div class="flow-node fn-b">
+      <div class="fn-time">0:09 - 0:12</div>
+      <div class="fn-title">进入 timegov.net · 仿政府界面</div>
+      <div class="fn-desc">极简政务风格网站，导航栏（首页/归档/时间线/关于），部分内容需要登录，有一个消息图标</div>
+    </div>
+    <div class="flow-node fn-r">
+      <div class="fn-time">0:12 - 0:18</div>
+      <div class="fn-title">谜题 #1 · 登录凭证</div>
+      <div class="fn-desc">线索分散在帖子回复、照片EXIF、timegov公开页面中。时间相关的解密（如时间戳差值）。难度：★☆☆☆☆</div>
+    </div>
+    <div class="flow-node fn-o">
+      <div class="fn-time">0:18 - 0:22</div>
+      <div class="fn-title">转折 · 聊天框闪烁</div>
+      <div class="fn-desc">登录后消息图标闪烁，"前员工"主动联系。语气像在等你。引导你去看"他曾经的OS"。</div>
+    </div>
+  </div>
+
+  <!-- ACT 2 -->
+  <div class="divider"><span style="color:var(--purple)">第二幕 · 别人的桌面 · 50-60 min</span></div>
+
+  <div class="flow">
+    <div class="flow-node fn-p">
+      <div class="fn-time">0:22 - 0:25</div>
+      <div class="fn-title">进入模拟 OS · 古老 Windows 风格</div>
+      <div class="fn-desc">古老Windows桌面。右下角时钟显示的时间和现实有微小偏差（机制A启动）。有文件夹、回收站、记事本、浏览器、聊天软件等。</div>
+    </div>
+    <div class="flow-node fn-p">
+      <div class="fn-time">0:25 - 0:50</div>
+      <div class="fn-title">自由探索 · 多条线索交织</div>
+      <div class="fn-desc">
+        玩家在OS中翻找文件，拼凑"这台电脑的主人"的故事。谜题素材分散在各处：<br>
+        · 文件夹中的照片和文档<br>
+        · 浏览器历史记录<br>
+        · 聊天软件中的对话记录<br>
+        · 记事本/便签中的零碎笔记<br>
+        · 回收站中被删除的文件<br>
+        · 2-3个中等难度谜题，答案来自跨位置的信息组合
+      </div>
+    </div>
+    <div class="flow-node fn-g">
+      <div class="fn-time">穿插进行</div>
+      <div class="fn-title">困告小狗的消息（持续）</div>
+      <div class="fn-desc">困告小狗也在自己查东西，间歇发来消息。态度从"好玩"逐渐变成"这事有点不对"。她可能发现了一些玩家还没注意到的外部信息。</div>
+    </div>
+    <div class="flow-node fn-b">
+      <div class="fn-time">穿插进行</div>
+      <div class="fn-title">"前员工"的引导（持续）</div>
+      <div class="fn-desc">timegov 聊天框中"前员工"偶尔发来消息，引导玩家打开特定文件或进入特定区域。语气始终温和、有帮助感。但如果玩家仔细看时间戳，会发现微妙的异常。</div>
+    </div>
+    <div class="flow-node fn-o">
+      <div class="fn-time">0:50 - 1:00</div>
+      <div class="fn-title">转折 · 日常外壳裂开</div>
+      <div class="fn-desc">
+        玩家在OS中发现关键信息，让之前所有"日常"的东西突然变了味：<br>
+        · OS时钟的时间差已经大到无法忽视<br>
+        · "前员工"的某条消息时间戳早于玩家的操作<br>
+        · OS里发现了真正前员工的遗言碎片<br>
+        · 那张自拍的女生也出现在OS的文件中——她不是陌生人
+      </div>
+    </div>
+  </div>
+
+  <!-- ACT 3 -->
+  <div class="divider"><span style="color:var(--accent)">第三幕 · 逃离 · 20-30 min</span></div>
+
+  <div class="flow">
+    <div class="flow-node fn-r">
+      <div class="fn-time">1:00 - 1:15</div>
+      <div class="fn-title">谜题 · 拼合遗言</div>
+      <div class="fn-desc">
+        真正GM的"遗言"被打散藏在OS各处。玩家需要用前面积累的所有线索找到并拼合这些碎片。
+        遗言揭示了 timegov 的真相和"那个东西"的本质。<br>
+        难度：★★★★☆<br>
+        与此同时，OS时钟加速越来越明显，制造紧迫感。
+      </div>
+    </div>
+    <div class="flow-node fn-o">
+      <div class="fn-time">1:15 - 1:25</div>
+      <div class="fn-title">觉醒 · 三条逃离路径</div>
+      <div class="fn-desc">玩家意识到真相后，需要做出行动（见下方详细设计）。<br>"那个东西"会试图阻止你——语气从温和变为急切，甚至恳求。</div>
+    </div>
+    <div class="flow-node fn-g">
+      <div class="fn-time">1:25 - 1:30</div>
+      <div class="fn-title">结局 · 余韵</div>
+      <div class="fn-desc">
+        逃离后，回到最初的聊天界面。困告小狗发来最后一条消息。<br>
+        一切似乎恢复正常，但有一个细节让人无法释怀。<br>
+        游戏结束。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 5. THREE PATHS ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">05</span>
+    <h2>三条觉醒路径</h2>
+  </div>
+
+  <p style="font-size:13.5px;color:#71717a;margin-bottom:20px;">
+    三条路径对应不同性格的玩家，最终都会到达同一个结局，但体验不同。
+  </p>
+
+  <div class="paths">
+    <div class="path-card path-a">
+      <h4>路径 A · 关掉一切</h4>
+      <p><b>触发：</b>玩家在OS中发现时间完全对不上，本能反应是关掉页面。</p>
+      <p><b>过程：</b>当玩家尝试关闭OS窗口时，系统弹出对话框——不是普通的"确认关闭"，而是一句看似系统提示实则意味深长的话。玩家坚持关闭。</p>
+      <p><b>体验感：</b>恐慌中的直觉逃生。事后回想："如果我当时没关会怎样？"</p>
+    </div>
+    <div class="path-card path-b">
+      <h4>路径 B · 质问"你是谁"</h4>
+      <p><b>触发：</b>玩家注意到聊天框时间戳异常，回到timegov聊天界面质问对方。</p>
+      <p><b>过程：</b>玩家选择"你到底是谁"之类的选项。"前员工"的回答开始出现矛盾，最终语气发生变化——从温和变成别的什么。</p>
+      <p><b>体验感：</b>对峙的戏剧性。"我看穿了你。"</p>
+    </div>
+    <div class="path-card path-c">
+      <h4>路径 C · 找到遗言</h4>
+      <p><b>触发：</b>玩家在OS中找到真正GM的完整遗言。</p>
+      <p><b>过程：</b>遗言直接告诉玩家真相："不要相信聊天框里的任何人。"玩家按照遗言中的指示执行某个操作（如删除某个文件/输入某个命令），切断连接。</p>
+      <p><b>体验感：</b>推理的成就感。"我找到了真正的答案。"</p>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <b>汇合点：</b>无论哪条路径，结果都是玩家"断开"了与timegov/OS的连接。屏幕短暂黑屏后，回到最初的聊天界面——困告小狗的对话框。
+  </div>
+</div>
+
+<!-- ==================== 6. ENDING ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">06</span>
+    <h2>结局设计</h2>
+  </div>
+
+  <div class="card card-green">
+    <h3>回到聊天界面</h3>
+    <p>屏幕回到最初和困告小狗的聊天界面。一切看起来很正常——就像你只是走神了一会儿。</p>
+  </div>
+
+  <div class="chat-box">
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">你还在吗</div>
+    </div>
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">那个网站怎么样了</div>
+    </div>
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">我刚才又去看了那个小红书帖子</div>
+    </div>
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">帖子没了</div>
+    </div>
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">发照片的那个账号也没了</div>
+    </div>
+    <div class="chat-msg">
+      <div class="chat-name chat-name-a">困告小狗🍀</div>
+      <div class="chat-text">就像从来没存在过一样</div>
+    </div>
+  </div>
+
+  <div class="card card-accent">
+    <h3>最后一个细节（细思极恐）</h3>
+    <p>玩家回到聊天界面后，可以翻看之前和困告小狗的聊天记录。一切正常——直到玩家注意到一个细节：</p>
+    <p><b>困告小狗最初发那张照片的时间，是在那个小红书帖子发布之前。</b></p>
+    <p>也就是说，照片不是困告小狗从小红书截的。她比那个帖子更早拥有了这张照片。</p>
+    <p>但困告小狗自己似乎完全没有意识到这一点。</p>
+    <p style="color:var(--muted);margin-top:12px;font-style:italic;">游戏结束。屏幕渐暗。</p>
+  </div>
+
+  <div class="highlight">
+    <b>余韵效果：</b>这个细节不会被所有玩家注意到。注意到的玩家会产生一个无法回答的问题——困告小狗是怎么得到那张照片的？她也是被"选中"的吗？还是说……她从一开始就不是你认识的那个人？
+  </div>
+</div>
+
+<!-- ==================== 7. TIME FORESHADOWING ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">07</span>
+    <h2>时间线索的埋设节奏</h2>
+  </div>
+
+  <p style="font-size:13.5px;color:#71717a;margin-bottom:20px;">
+    "时间不对"这个核心破绽需要在全程中逐步渗透，从完全不可察觉到无法忽视：
+  </p>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>阶段</th>
+        <th>时间异常</th>
+        <th>玩家感知</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>第一幕</b></td>
+        <td>照片EXIF的时间戳差值（谜题#1的素材）</td>
+        <td>只当做谜题素材，不会多想</td>
+      </tr>
+      <tr>
+        <td><b>第二幕前期</b></td>
+        <td>OS时钟与现实差2-3分钟</td>
+        <td>几乎不会注意到</td>
+      </tr>
+      <tr>
+        <td><b>第二幕中期</b></td>
+        <td>"前员工"某条消息的时间戳比你操作早了几秒</td>
+        <td>可能注意但会合理化（"网络延迟吧"）</td>
+      </tr>
+      <tr>
+        <td><b>第二幕后期</b></td>
+        <td>OS时钟已经快了20+分钟；OS里某个文件的创建时间是"明天"</td>
+        <td>开始感到不对劲</td>
+      </tr>
+      <tr>
+        <td><b>第三幕</b></td>
+        <td>"前员工"的消息时间戳出现在玩家登录之前；OS时间加速肉眼可见</td>
+        <td>无法忽视——"这不对"</td>
+      </tr>
+      <tr>
+        <td><b>结局</b></td>
+        <td>困告小狗发照片的时间早于小红书帖子</td>
+        <td>细思极恐</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ==================== 8. MEDIA MAP ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">08</span>
+    <h2>媒介跳转地图</h2>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>媒介</th>
+        <th>功能</th>
+        <th>出现阶段</th>
+        <th>技术实现</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>聊天界面</b>（困告小狗）</td>
+        <td>情感线、提示系统、开场和结局</td>
+        <td>全程</td>
+        <td>纯HTML模拟微信/聊天界面</td>
+      </tr>
+      <tr>
+        <td><b>社交平台帖子</b></td>
+        <td>信息获取、过渡场景</td>
+        <td>第一幕</td>
+        <td>纯HTML模拟帖子页</td>
+      </tr>
+      <tr>
+        <td><b>timegov.net</b></td>
+        <td>谜题载体、"前员工"聊天、登录入口</td>
+        <td>第一幕&第三幕</td>
+        <td>纯HTML仿政府网站</td>
+      </tr>
+      <tr>
+        <td><b>模拟OS</b></td>
+        <td>核心探索区、多谜题、时间机制</td>
+        <td>第二幕&第三幕</td>
+        <td>你的现有demo（古老Windows风格）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight green">
+    <b>跳转节奏：</b>聊天 → 帖子 → 网站 → 聊天 → OS → 聊天（穿插） → 网站聊天框 → OS → 聊天（结局）。<br>
+    每次跳转都伴随着身份的微妙变化：闲聊的朋友 → 发帖的网友 → 好奇的访客 → 被选中的调查者 → 窥探者 → 逃离者。
+  </div>
+</div>
+
+<!-- ==================== 9. TODO ==================== -->
+<div class="section">
+  <div class="section-head">
+    <span class="num">09</span>
+    <h2>待设计清单</h2>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>项目</th>
+        <th>状态</th>
+        <th>备注</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><b>发帖平台的具体风格</b></td><td style="color:var(--yellow)">待确定</td><td>小红书/豆瓣/知乎/论坛？</td></tr>
+      <tr><td><b>各谜题的具体机制</b></td><td style="color:var(--yellow)">待设计</td><td>第一幕谜题已有方向（时间戳差值），第二幕谜题待定</td></tr>
+      <tr><td><b>"前员工"的完整对话脚本</b></td><td style="color:var(--yellow)">待编写</td><td>需要设计正常对话 + 被质问后的反应</td></tr>
+      <tr><td><b>OS内文件系统的详细内容</b></td><td style="color:var(--yellow)">待设计</td><td>文件夹结构、具体文件内容、隐藏线索位置</td></tr>
+      <tr><td><b>真正GM遗言的完整内容</b></td><td style="color:var(--yellow)">待编写</td><td>碎片化分布在OS各处</td></tr>
+      <tr><td><b>困告小狗的完整对话脚本</b></td><td style="color:var(--yellow)">待编写</td><td>需要贯穿全程，包括各触发点的反应</td></tr>
+      <tr><td><b>OS时间加速的具体参数</b></td><td style="color:var(--yellow)">待调试</td><td>初始偏差、加速曲线、截止时刻</td></tr>
+      <tr><td><b>机制B的时间段划分和内容差异</b></td><td style="color:var(--yellow)">待设计</td><td>白天版/夜间版/隐藏时间窗</td></tr>
+      <tr><td><b>timegov网站UI设计</b></td><td style="color:var(--yellow)">待设计</td><td>仿政府风格，需要登录页/首页/归档页/聊天框</td></tr>
+      <tr><td><b>结局的具体细节打磨</b></td><td style="color:var(--yellow)">待打磨</td><td>三条路径的分支对话、最终余韵的呈现方式</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- end wrap -->
+</body>
+</html>

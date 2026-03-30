@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>TimeGov.net — Global Time Synchronization & Temporal Archive Service</title>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+		rel="stylesheet">
+	<style>
+		/* ═══════════════════════════════════════════
+   THEME TOKENS
+   ═══════════════════════════════════════════ */
+		[data-theme="dark"] {
+			--background: #09090b;
+			--foreground: #fafafa;
+			--card: #0a0a0c;
+			--secondary: #27272a;
+			--muted: #27272a;
+			--muted-foreground: #a1a1aa;
+			--accent: #27272a;
+			--border: #27272a;
+			--green: #22c55e;
+			--amber: #f59e0b;
+			--red: #ef4444;
+			--blue: #3b82f6;
+			--cyan: #06b6d4;
+			--glow-1: rgba(59, 130, 246, 0.08);
+			--glow-2: rgba(6, 182, 212, 0.04);
+			--subtle-bg: rgba(255, 255, 255, 0.03);
+			--subtle-hover: rgba(255, 255, 255, 0.02);
+			--dim: #52525b;
+			--dim2: #3f3f46;
+			--dim3: #27272a;
+			--header-bg: rgba(9, 9, 11, 0.8);
+			--modal-bg: rgba(0, 0, 0, 0.6);
+			--login-btn-bg: #fafafa;
+			--login-btn-fg: #18181b;
+		}
+
+		[data-theme="light"] {
+			--background: #ffffff;
+			--foreground: #09090b;
+			--card: #f9fafb;
+			--secondary: #f4f4f5;
+			--muted: #f4f4f5;
+			--muted-foreground: #71717a;
+			--accent: #f4f4f5;
+			--border: #e4e4e7;
+			--green: #16a34a;
+			--amber: #d97706;
+			--red: #dc2626;
+			--blue: #2563eb;
+			--cyan: #0891b2;
+			--glow-1: rgba(59, 130, 246, 0.04);
+			--glow-2: rgba(6, 182, 212, 0.02);
+			--subtle-bg: rgba(0, 0, 0, 0.02);
+			--subtle-hover: rgba(0, 0, 0, 0.01);
+			--dim: #a1a1aa;
+			--dim2: #d4d4d8;
+			--dim3: #e4e4e7;
+			--header-bg: rgba(255, 255, 255, 0.85);
+			--modal-bg: rgba(0, 0, 0, 0.3);
+			--login-btn-bg: #18181b;
+			--login-btn-fg: #fafafa;
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			background: var(--background);
+			color: var(--foreground);
+			font-family: 'Geist', 'Noto Sans SC', -apple-system, sans-serif;
+			line-height: 1.6;
+			min-height: 100vh;
+			overflow-x: hidden;
+			transition: background 0.3s, color 0.3s;
+		}
+
+		body::before {
+			content: '';
+			position: fixed;
+			inset: 0;
+			background:
+				radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow-1), transparent),
+				radial-gradient(ellipse 60% 40% at 80% 60%, var(--glow-2), transparent);
+			pointer-events: none;
+			z-index: 0;
+			transition: background 0.3s;
+		}
+
+		.mono {
+			font-family: 'Geist Mono', monospace;
+		}
+
+		/* ═══════════════════ HEADER ═══════════════════ */
+		header {
+			position: sticky;
+			top: 0;
+			z-index: 100;
+			background: var(--header-bg);
+			backdrop-filter: blur(12px);
+			border-bottom: 1px solid var(--border);
+			transition: background 0.3s, border-color 0.3s;
+		}
+
+		.header-inner {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 24px;
+			height: 56px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.logo {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			text-decoration: none;
+			color: var(--foreground);
+		}
+
+		.logo-icon {
+			width: 28px;
+			height: 28px;
+			border-radius: 6px;
+			background: linear-gradient(135deg, var(--blue), var(--cyan));
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 14px;
+			font-weight: 700;
+			color: #fff;
+		}
+
+		.logo-text {
+			font-size: 15px;
+			font-weight: 600;
+			letter-spacing: -0.3px;
+		}
+
+		.logo-text span {
+			color: var(--muted-foreground);
+			font-weight: 400;
+		}
+
+		nav {
+			display: flex;
+			align-items: center;
+			gap: 2px;
+		}
+
+		nav a {
+			color: var(--muted-foreground);
+			text-decoration: none;
+			font-size: 13px;
+			font-weight: 500;
+			padding: 6px 12px;
+			border-radius: 6px;
+			transition: all 0.15s;
+		}
+
+		nav a:hover {
+			color: var(--foreground);
+			background: var(--accent);
+		}
+
+		nav a.active {
+			color: var(--foreground);
+		}
+
+		.header-right {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.toggle-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 32px;
+			height: 32px;
+			background: transparent;
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			cursor: pointer;
+			color: var(--muted-foreground);
+			font-size: 14px;
+			transition: all 0.15s;
+		}
+
+		.toggle-btn:hover {
+			color: var(--foreground);
+			border-color: var(--dim);
+			background: var(--accent);
+		}
+
+		.toggle-btn svg {
+			width: 15px;
+			height: 15px;
+		}
+
+		.lang-btn {
+			width: auto;
+			padding: 0 10px;
+			font-size: 11px;
+			font-weight: 600;
+			font-family: 'Geist', 'Noto Sans SC', sans-serif;
+			letter-spacing: 0.5px;
+		}
+
+		.login-trigger {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			background: transparent;
+			border: 1px solid var(--border);
+			padding: 5px 14px;
+			border-radius: 6px;
+			cursor: pointer;
+			transition: all 0.15s;
+			font-family: 'Geist', 'Noto Sans SC', sans-serif;
+		}
+
+		.login-trigger:hover {
+			color: var(--foreground);
+			border-color: var(--dim);
+			background: var(--accent);
+		}
+
+		.login-trigger svg {
+			width: 14px;
+			height: 14px;
+		}
+
+		/* ═══════════════════ HERO ═══════════════════ */
+		.hero {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 60px 24px 40px;
+			text-align: center;
+		}
+
+		.hero-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--green);
+			background: rgba(34, 197, 94, 0.08);
+			border: 1px solid rgba(34, 197, 94, 0.15);
+			padding: 4px 12px;
+			border-radius: 100px;
+			margin-bottom: 20px;
+			letter-spacing: 0.3px;
+		}
+
+		.hero-badge::before {
+			content: '';
+			width: 6px;
+			height: 6px;
+			background: var(--green);
+			border-radius: 50%;
+			animation: pulse-dot 2s infinite;
+		}
+
+		@keyframes pulse-dot {
+
+			0%,
+			100% {
+				opacity: 1
+			}
+
+			50% {
+				opacity: 0.4
+			}
+		}
+
+		.hero-time {
+			font-family: 'Geist Mono', monospace;
+			font-size: clamp(48px, 8vw, 80px);
+			font-weight: 700;
+			letter-spacing: -2px;
+			color: var(--foreground);
+			line-height: 1;
+			margin-bottom: 8px;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.hero-time .seconds {
+			color: var(--muted-foreground);
+			font-weight: 400;
+		}
+
+		.hero-date {
+			font-size: 15px;
+			color: var(--muted-foreground);
+			margin-bottom: 6px;
+		}
+
+		.hero-utc {
+			font-family: 'Geist Mono', monospace;
+			font-size: 12px;
+			color: var(--dim);
+			margin-bottom: 32px;
+		}
+
+		.hero-desc {
+			font-size: 14px;
+			color: var(--muted-foreground);
+			max-width: 520px;
+			margin: 0 auto 16px;
+			line-height: 1.7;
+		}
+
+		/* ═══════════════════ SECTIONS ═══════════════════ */
+		.section {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 24px 60px;
+		}
+
+		.section-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 20px;
+		}
+
+		.section-title {
+			font-size: 16px;
+			font-weight: 600;
+			color: var(--foreground);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.section-title .icon {
+			font-size: 14px;
+			color: var(--muted-foreground);
+		}
+
+		.section-sub {
+			font-size: 12px;
+			color: var(--dim);
+		}
+
+		/* ═══════════════════ TZ GRID ═══════════════════ */
+		.tz-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+			gap: 12px;
+		}
+
+		.tz-card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 16px;
+			transition: all 0.15s;
+		}
+
+		.tz-card:hover {
+			border-color: var(--dim);
+		}
+
+		.tz-name {
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			margin-bottom: 2px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.tz-offset {
+			font-family: 'Geist Mono', monospace;
+			font-size: 10px;
+			color: var(--dim);
+			background: var(--subtle-bg);
+			padding: 2px 6px;
+			border-radius: 4px;
+		}
+
+		.tz-time {
+			font-family: 'Geist Mono', monospace;
+			font-size: 22px;
+			font-weight: 600;
+			color: var(--foreground);
+			letter-spacing: -0.5px;
+			margin-bottom: 2px;
+		}
+
+		.tz-date {
+			font-size: 11px;
+			color: var(--dim2);
+		}
+
+		/* ═══════════════════ STATS ═══════════════════ */
+		.stats-bar {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 12px;
+			margin-bottom: 60px;
+		}
+
+		.stat-card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 16px;
+			transition: border-color 0.3s;
+		}
+
+		.stat-label {
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			margin-bottom: 4px;
+		}
+
+		.stat-value {
+			font-family: 'Geist Mono', monospace;
+			font-size: 22px;
+			font-weight: 700;
+			color: var(--foreground);
+		}
+
+		.stat-value .unit {
+			font-size: 12px;
+			font-weight: 400;
+			color: var(--dim);
+		}
+
+		/* ═══════════════════ ARCHIVE ═══════════════════ */
+		.archive-container {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			overflow: hidden;
+			transition: border-color 0.3s;
+		}
+
+		.archive-toolbar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--border);
+		}
+
+		.archive-search {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			background: var(--background);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			padding: 5px 10px;
+			width: 260px;
+			transition: border-color 0.15s;
+		}
+
+		.archive-search:focus-within {
+			border-color: var(--dim);
+		}
+
+		.archive-search svg {
+			width: 14px;
+			height: 14px;
+			color: var(--dim);
+			flex-shrink: 0;
+		}
+
+		.archive-search input {
+			background: transparent;
+			border: none;
+			outline: none;
+			color: var(--foreground);
+			font-size: 12px;
+			font-family: 'Geist', sans-serif;
+			width: 100%;
+		}
+
+		.archive-search input::placeholder {
+			color: var(--dim2);
+		}
+
+		.archive-filters {
+			display: flex;
+			gap: 6px;
+		}
+
+		.filter-btn {
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			background: transparent;
+			border: 1px solid var(--border);
+			padding: 4px 10px;
+			border-radius: 6px;
+			cursor: pointer;
+			transition: all 0.15s;
+			font-family: 'Geist', sans-serif;
+		}
+
+		.filter-btn:hover,
+		.filter-btn.active {
+			color: var(--foreground);
+			background: var(--accent);
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		thead th {
+			text-align: left;
+			padding: 10px 16px;
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			border-bottom: 1px solid var(--border);
+			background: var(--subtle-bg);
+		}
+
+		tbody td {
+			padding: 10px 16px;
+			font-size: 12px;
+			color: var(--muted-foreground);
+			border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+		}
+
+		tbody tr {
+			transition: background 0.1s;
+		}
+
+		tbody tr:hover {
+			background: var(--subtle-hover);
+		}
+
+		tbody tr:last-child td {
+			border-bottom: none;
+		}
+
+		.id-cell {
+			font-family: 'Geist Mono', monospace;
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--foreground);
+		}
+
+		.status-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+			font-size: 11px;
+			font-weight: 500;
+			padding: 2px 8px;
+			border-radius: 100px;
+		}
+
+		.status-archived {
+			color: var(--red);
+			background: rgba(239, 68, 68, 0.08);
+		}
+
+		.status-disconnected {
+			color: var(--muted-foreground);
+			background: var(--subtle-bg);
+		}
+
+		.status-connected {
+			color: var(--green);
+			background: rgba(34, 197, 94, 0.08);
+		}
+
+		.status-dot {
+			width: 5px;
+			height: 5px;
+			border-radius: 50%;
+			background: currentColor;
+		}
+
+		.status-connected .status-dot {
+			animation: pulse-dot 2s infinite;
+		}
+
+		.anomaly-tag {
+			font-family: 'Geist Mono', monospace;
+			font-size: 10px;
+			color: var(--dim);
+			background: var(--subtle-bg);
+			padding: 2px 6px;
+			border-radius: 4px;
+		}
+
+		.clickable-row {
+			cursor: pointer;
+		}
+
+		.clickable-row .id-cell {
+			color: var(--blue);
+		}
+
+		.clickable-row:hover .id-cell {
+			text-decoration: underline;
+		}
+
+		.archive-footer {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 10px 16px;
+			border-top: 1px solid var(--border);
+		}
+
+		.page-info {
+			font-size: 11px;
+			color: var(--dim);
+		}
+
+		.page-btns {
+			display: flex;
+			gap: 4px;
+		}
+
+		.page-btn {
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--muted-foreground);
+			background: transparent;
+			border: 1px solid var(--border);
+			padding: 4px 10px;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: all 0.15s;
+			font-family: 'Geist', sans-serif;
+		}
+
+		.page-btn:hover {
+			background: var(--accent);
+			color: var(--foreground);
+		}
+
+		.page-btn:disabled {
+			opacity: 0.3;
+			cursor: not-allowed;
+		}
+
+		/* ═══════════════════ SYNC CARD ═══════════════════ */
+		.sync-card {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 20px;
+			margin-bottom: 60px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			transition: border-color 0.3s;
+		}
+
+		.sync-left h3 {
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--foreground);
+			margin-bottom: 4px;
+		}
+
+		.sync-left p {
+			font-size: 12px;
+			color: var(--muted-foreground);
+		}
+
+		.sync-right {
+			text-align: right;
+		}
+
+		.sync-offset {
+			font-family: 'Geist Mono', monospace;
+			font-size: 28px;
+			font-weight: 700;
+			color: var(--green);
+		}
+
+		.sync-offset.warn {
+			color: var(--amber);
+		}
+
+		.sync-label {
+			font-size: 11px;
+			color: var(--dim);
+		}
+
+		/* ═══════════════════ MODAL ═══════════════════ */
+		.modal-overlay {
+			position: fixed;
+			inset: 0;
+			background: var(--modal-bg);
+			backdrop-filter: blur(4px);
+			z-index: 200;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.2s;
+		}
+
+		.modal-overlay.open {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.modal {
+			background: var(--card);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			width: 380px;
+			max-width: 90vw;
+			overflow: hidden;
+			transform: translateY(8px) scale(0.98);
+			transition: transform 0.2s;
+			position: relative;
+		}
+
+		.modal-overlay.open .modal {
+			transform: translateY(0) scale(1);
+		}
+
+		.modal-header {
+			padding: 20px 20px 0;
+		}
+
+		.modal-header h2 {
+			font-size: 16px;
+			font-weight: 600;
+			color: var(--foreground);
+			margin-bottom: 4px;
+		}
+
+		.modal-header p {
+			font-size: 12px;
+			color: var(--muted-foreground);
+		}
+
+		.modal-body {
+			padding: 20px;
+		}
+
+		.form-group {
+			margin-bottom: 14px;
+		}
+
+		.form-group label {
+			display: block;
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--foreground);
+			margin-bottom: 6px;
+		}
+
+		.form-input {
+			width: 100%;
+			padding: 8px 12px;
+			background: var(--background);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			color: var(--foreground);
+			font-size: 13px;
+			font-family: 'Geist Mono', monospace;
+			outline: none;
+			transition: border-color 0.15s;
+		}
+
+		.form-input:focus {
+			border-color: var(--dim);
+		}
+
+		.form-input::placeholder {
+			color: var(--dim2);
+		}
+
+		.login-btn {
+			width: 100%;
+			padding: 8px;
+			background: var(--login-btn-bg);
+			color: var(--login-btn-fg);
+			border: none;
+			border-radius: 6px;
+			font-size: 13px;
+			font-weight: 600;
+			font-family: 'Geist', sans-serif;
+			cursor: pointer;
+			transition: opacity 0.15s;
+		}
+
+		.login-btn:hover {
+			opacity: 0.9;
+		}
+
+		.modal-footer {
+			padding: 0 20px 20px;
+			text-align: center;
+		}
+
+		.modal-footer p {
+			font-size: 11px;
+			color: var(--dim2);
+		}
+
+		.modal-close {
+			position: absolute;
+			top: 16px;
+			right: 16px;
+			background: transparent;
+			border: none;
+			color: var(--muted-foreground);
+			cursor: pointer;
+			padding: 4px;
+			border-radius: 4px;
+		}
+
+		.modal-close:hover {
+			color: var(--foreground);
+			background: var(--accent);
+		}
+
+		/* ═══════════════════ FOOTER ═══════════════════ */
+		footer {
+			border-top: 1px solid var(--border);
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 24px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			transition: border-color 0.3s;
+		}
+
+		footer p {
+			font-size: 11px;
+			color: var(--dim2);
+		}
+
+		footer a {
+			color: var(--dim);
+			text-decoration: none;
+			font-size: 11px;
+			transition: color 0.15s;
+		}
+
+		footer a:hover {
+			color: var(--muted-foreground);
+		}
+
+		.footer-links {
+			display: flex;
+			gap: 16px;
+		}
+
+		.visitor-count {
+			font-family: 'Geist Mono', monospace;
+			font-size: 10px;
+			color: var(--dim3);
+		}
+
+		/* ═══════════════════ RESPONSIVE ═══════════════════ */
+		@media (max-width: 768px) {
+			.stats-bar {
+				grid-template-columns: repeat(2, 1fr);
+			}
+
+			.sync-card {
+				flex-direction: column;
+				gap: 16px;
+				text-align: center;
+			}
+
+			.sync-right {
+				text-align: center;
+			}
+
+			.archive-toolbar {
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.archive-search {
+				width: 100%;
+			}
+
+			nav {
+				display: none;
+			}
+
+			.header-inner {
+				height: 48px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- ═══════════ HEADER ═══════════ -->
+	<header>
+		<div class="header-inner">
+			<a class="logo" href="#">
+				<div class="logo-icon">T</div>
+				<div class="logo-text">TimeGov<span>.net</span></div>
+			</a>
+			<nav>
+				<a href="#" class="active" data-i18n="nav_time">Time</a>
+				<a href="#sync-section" data-i18n="nav_sync">Sync</a>
+				<a href="#archive-section" data-i18n="nav_archive">Archive</a>
+				<a href="#about" data-i18n="nav_about">About</a>
+				<a href="#faq" data-i18n="nav_faq">FAQ</a>
+			</nav>
+			<div class="header-right">
+				<button class="toggle-btn" onclick="toggleTheme()" id="theme-toggle" title="Toggle theme">
+					<svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+						style="display:none">
+						<circle cx="12" cy="12" r="5" />
+						<path
+							d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+					</svg>
+					<svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+					</svg>
+				</button>
+				<button class="toggle-btn lang-btn" onclick="toggleLang()" id="lang-toggle">EN</button>
+				<button class="login-trigger" onclick="openModal()">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="11" width="18" height="11" rx="2" />
+						<path d="M7 11V7a5 5 0 0 1 10 0v4" />
+					</svg>
+					<span data-i18n="nav_admin">Admin</span>
+				</button>
+			</div>
+		</div>
+	</header>
+
+	<!-- ═══════════ HERO ═══════════ -->
+	<section class="hero">
+		<div class="hero-badge mono" data-i18n="hero_badge">NIST-SYNCHRONIZED · ACTIVE</div>
+		<div class="hero-time mono" id="hero-clock">--:--:--</div>
+		<div class="hero-date" id="hero-date">Loading...</div>
+		<div class="hero-utc mono" id="hero-utc">UTC --:--:--</div>
+		<p class="hero-desc" data-i18n="hero_desc">Official time synchronization service. Providing precision temporal
+			data, clock calibration, and temporal anomaly archival since 2019.</p>
+	</section>
+
+	<!-- ═══════════ STATS ═══════════ -->
+	<div class="section">
+		<div class="stats-bar">
+			<div class="stat-card">
+				<div class="stat-label" data-i18n="stat_archived">Archived Records</div>
+				<div class="stat-value mono">1,847 <span class="unit" data-i18n="stat_entries">entries</span></div>
+			</div>
+			<div class="stat-card">
+				<div class="stat-label" data-i18n="stat_active">Active Connections</div>
+				<div class="stat-value mono" style="color:var(--green)">1 <span class="unit"
+						data-i18n="stat_node">node</span></div>
+			</div>
+			<div class="stat-card">
+				<div class="stat-label" data-i18n="stat_disconnected">Disconnected</div>
+				<div class="stat-value mono">23 <span class="unit" data-i18n="stat_nodes">nodes</span></div>
+			</div>
+			<div class="stat-card">
+				<div class="stat-label" data-i18n="stat_accuracy">Sync Accuracy</div>
+				<div class="stat-value mono">±0.003 <span class="unit">s</span></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ═══════════ TZ GRID ═══════════ -->
+	<div class="section">
+		<div class="section-header">
+			<div class="section-title"><span class="icon">◷</span> <span data-i18n="tz_title">World Time Zones</span>
+			</div>
+			<div class="section-sub mono" data-i18n="tz_sub">Auto-synchronized every 1s</div>
+		</div>
+		<div class="tz-grid" id="tz-grid"></div>
+	</div>
+
+	<!-- ═══════════ DEVICE SYNC ═══════════ -->
+	<div class="section" id="sync-section">
+		<div class="sync-card">
+			<div class="sync-left">
+				<h3 data-i18n="sync_title">Your Device Clock</h3>
+				<p><span data-i18n="sync_desc">Comparing your local system time against NIST reference. Detected
+						timezone:</span> <span class="mono" id="user-tz">--</span></p>
+			</div>
+			<div class="sync-right">
+				<div class="sync-offset mono" id="sync-offset">+0.000</div>
+				<div class="sync-label" data-i18n="sync_label">seconds offset</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ═══════════ ARCHIVE ═══════════ -->
+	<div class="section" id="archive-section">
+		<div class="section-header">
+			<div class="section-title"><span class="icon">▤</span> <span data-i18n="archive_title">Temporal Anomaly
+					Archive</span></div>
+			<div class="section-sub" data-i18n="archive_sub">Displaying records from the temporal monitoring network
+			</div>
+		</div>
+		<div class="archive-container">
+			<div class="archive-toolbar">
+				<div class="archive-search">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="11" cy="11" r="8" />
+						<path d="m21 21-4.3-4.3" />
+					</svg>
+					<input type="text" data-i18n-placeholder="archive_search"
+						placeholder="Search records by ID, type, or status..." id="archive-search-input">
+				</div>
+				<div class="archive-filters">
+					<button class="filter-btn active" onclick="filterArchive('all', this)"
+						data-i18n="filter_all">All</button>
+					<button class="filter-btn" onclick="filterArchive('archived', this)"
+						data-i18n="filter_archived">Archived</button>
+					<button class="filter-btn" onclick="filterArchive('disconnected', this)"
+						data-i18n="filter_disconnected">Disconnected</button>
+					<button class="filter-btn" onclick="filterArchive('connected', this)"
+						data-i18n="filter_active">Active</button>
+				</div>
+			</div>
+			<table>
+				<thead>
+					<tr>
+						<th data-i18n="th_id">Record ID</th>
+						<th data-i18n="th_ts">Timestamp</th>
+						<th data-i18n="th_type">Anomaly Type</th>
+						<th data-i18n="th_status">Status</th>
+					</tr>
+				</thead>
+				<tbody id="archive-tbody"></tbody>
+			</table>
+			<div class="archive-footer">
+				<div class="page-info mono" id="page-info">1-20 of 1,847 records</div>
+				<div class="page-btns">
+					<button class="page-btn" disabled data-i18n="page_prev">← Prev</button>
+					<button class="page-btn" data-i18n="page_next">Next →</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ═══════════ FOOTER ═══════════ -->
+	<footer>
+		<p>© 2019–2026 TimeGov.net · <span data-i18n="footer_desc">Temporal Data Archival Service</span></p>
+		<div class="footer-links">
+			<a href="#about" data-i18n="nav_about">About</a>
+			<a href="#faq" data-i18n="nav_faq">FAQ</a>
+			<a href="#" data-i18n="footer_privacy">Privacy</a>
+		</div>
+		<div class="visitor-count" id="visitor-count">Visitors: loading...</div>
+	</footer>
+
+	<!-- ═══════════ LOGIN MODAL ═══════════ -->
+	<div class="modal-overlay" id="login-modal">
+		<div class="modal">
+			<button class="modal-close" onclick="closeModal()">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M18 6 6 18" />
+					<path d="m6 6 12 12" />
+				</svg>
+			</button>
+			<div class="modal-header">
+				<h2 data-i18n="modal_title">Admin Access</h2>
+				<p data-i18n="modal_desc">Authorized personnel only. Enter credentials to access system controls.</p>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label data-i18n="modal_id">Record ID</label>
+					<input type="text" class="form-input" placeholder="TG-XXXX" id="login-id">
+				</div>
+				<div class="form-group">
+					<label data-i18n="modal_key">Access Key</label>
+					<input type="password" class="form-input" data-i18n-placeholder="modal_key_ph"
+						placeholder="Enter access key" id="login-key">
+				</div>
+				<button class="login-btn" onclick="attemptLogin()" data-i18n="modal_btn">Authenticate</button>
+			</div>
+			<div class="modal-footer">
+				<p data-i18n="modal_warn">This system is monitored. Unauthorized access will be logged.</p>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		/* ═══════════════════════════════════════════
+   I18N STRINGS
+   ═══════════════════════════════════════════ */
+		const I18N = {
+			en: {
+				nav_time: 'Time',
+				nav_sync: 'Sync',
+				nav_archive: 'Archive',
+				nav_about: 'About',
+				nav_faq: 'FAQ',
+				nav_admin: 'Admin',
+				hero_badge: 'NIST-SYNCHRONIZED · ACTIVE',
+				hero_desc: 'Official time synchronization service. Providing precision temporal data, clock calibration, and temporal anomaly archival since 2019.',
+				stat_archived: 'Archived Records',
+				stat_active: 'Active Connections',
+				stat_disconnected: 'Disconnected',
+				stat_accuracy: 'Sync Accuracy',
+				stat_entries: 'entries',
+				stat_node: 'node',
+				stat_nodes: 'nodes',
+				tz_title: 'World Time Zones',
+				tz_sub: 'Auto-synchronized every 1s',
+				sync_title: 'Your Device Clock',
+				sync_desc: 'Comparing your local system time against NIST reference. Detected timezone:',
+				sync_label: 'seconds offset',
+				archive_title: 'Temporal Anomaly Archive',
+				archive_sub: 'Displaying records from the temporal monitoring network',
+				archive_search: 'Search records by ID, type, or status...',
+				filter_all: 'All',
+				filter_archived: 'Archived',
+				filter_disconnected: 'Disconnected',
+				filter_active: 'Active',
+				th_id: 'Record ID',
+				th_ts: 'Timestamp',
+				th_type: 'Anomaly Type',
+				th_status: 'Status',
+				page_prev: '← Prev',
+				page_next: 'Next →',
+				footer_desc: 'Temporal Data Archival Service',
+				footer_privacy: 'Privacy',
+				modal_title: 'Admin Access',
+				modal_desc: 'Authorized personnel only. Enter credentials to access system controls.',
+				modal_id: 'Record ID',
+				modal_key: 'Access Key',
+				modal_key_ph: 'Enter access key',
+				modal_btn: 'Authenticate',
+				modal_warn: 'This system is monitored. Unauthorized access will be logged.',
+				status_archived: 'Archived',
+				status_disconnected: 'Disconnected',
+				status_connected: 'Connected',
+				visitors: 'Visitors'
+			},
+			zh: {
+				nav_time: '时间',
+				nav_sync: '校准',
+				nav_archive: '归档',
+				nav_about: '关于',
+				nav_faq: '常见问题',
+				nav_admin: '管理',
+				hero_badge: 'NIST 同步 · 运行中',
+				hero_desc: '官方时间同步服务。自2019年起提供精确时间数据、时钟校准及时间异常归档服务。',
+				stat_archived: '已归档记录',
+				stat_active: '活跃连接',
+				stat_disconnected: '已断开',
+				stat_accuracy: '同步精度',
+				stat_entries: '条',
+				stat_node: '节点',
+				stat_nodes: '节点',
+				tz_title: '世界时区',
+				tz_sub: '每秒自动同步',
+				sync_title: '您的设备时钟',
+				sync_desc: '正在与 NIST 参考源对比您的本地系统时间。检测到的时区：',
+				sync_label: '秒偏差',
+				archive_title: '时间异常归档库',
+				archive_sub: '显示来自时间监测网络的记录',
+				archive_search: '按编号、类型或状态搜索记录...',
+				filter_all: '全部',
+				filter_archived: '已归档',
+				filter_disconnected: '已断开',
+				filter_active: '活跃',
+				th_id: '记录编号',
+				th_ts: '时间戳',
+				th_type: '异常类型',
+				th_status: '状态',
+				page_prev: '← 上一页',
+				page_next: '下一页 →',
+				footer_desc: '时间数据归档服务',
+				footer_privacy: '隐私政策',
+				modal_title: '管理员登录',
+				modal_desc: '仅限授权人员。请输入凭证以访问系统控制台。',
+				modal_id: '记录编号',
+				modal_key: '访问密钥',
+				modal_key_ph: '输入访问密钥',
+				modal_btn: '认证',
+				modal_warn: '本系统受到监控。未经授权的访问将被记录。',
+				status_archived: '已归档',
+				status_disconnected: '已断开',
+				status_connected: '已连接',
+				visitors: '访问者'
+			}
+		};
+
+		let currentLang = 'en';
+
+		function toggleLang() {
+			currentLang = currentLang === 'en' ? 'zh' : 'en';
+			document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'EN' : '中';
+			document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+			applyI18n();
+			renderArchive(currentFilter);
+			updateVisitorCount();
+		}
+
+		function applyI18n() {
+			const t = I18N[currentLang];
+			document.querySelectorAll('[data-i18n]').forEach(el => {
+				const key = el.dataset.i18n;
+				if (t[key]) el.textContent = t[key];
+			});
+			document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+				const key = el.dataset.i18nPlaceholder;
+				if (t[key]) el.placeholder = t[key];
+			});
+		}
+
+		/* ═══════════════════ THEME ═══════════════════ */
+		function toggleTheme() {
+			const html = document.documentElement;
+			const isDark = html.dataset.theme === 'dark';
+			html.dataset.theme = isDark ? 'light' : 'dark';
+			document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
+			document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+		}
+
+		/* ═══════════════════ CLOCKS ═══════════════════ */
+		const ZONES = [{
+				name: 'Eastern Time',
+				tz: 'America/New_York',
+				offset: 'UTC-5'
+			},
+			{
+				name: 'Central Time',
+				tz: 'America/Chicago',
+				offset: 'UTC-6'
+			},
+			{
+				name: 'Mountain Time',
+				tz: 'America/Denver',
+				offset: 'UTC-7'
+			},
+			{
+				name: 'Pacific Time',
+				tz: 'America/Los_Angeles',
+				offset: 'UTC-8'
+			},
+			{
+				name: 'Alaska Time',
+				tz: 'America/Anchorage',
+				offset: 'UTC-9'
+			},
+			{
+				name: 'Hawaii Time',
+				tz: 'Pacific/Honolulu',
+				offset: 'UTC-10'
+			},
+			{
+				name: 'UTC',
+				tz: 'UTC',
+				offset: 'UTC±0'
+			},
+			{
+				name: 'Central European',
+				tz: 'Europe/Berlin',
+				offset: 'UTC+1'
+			},
+			{
+				name: 'China Standard',
+				tz: 'Asia/Shanghai',
+				offset: 'UTC+8'
+			},
+			{
+				name: 'Japan Standard',
+				tz: 'Asia/Tokyo',
+				offset: 'UTC+9'
+			},
+			{
+				name: 'Australian Eastern',
+				tz: 'Australia/Sydney',
+				offset: 'UTC+11'
+			},
+			{
+				name: 'India Standard',
+				tz: 'Asia/Kolkata',
+				offset: 'UTC+5:30'
+			},
+		];
+
+		function buildTZGrid() {
+			const grid = document.getElementById('tz-grid');
+			ZONES.forEach(z => {
+				const card = document.createElement('div');
+				card.className = 'tz-card';
+				card.innerHTML = `
+      <div class="tz-name">${z.name} <span class="tz-offset">${z.offset}</span></div>
+      <div class="tz-time mono" data-tz="${z.tz}">--:--:--</div>
+      <div class="tz-date" data-tz-date="${z.tz}">--</div>
+    `;
+				grid.appendChild(card);
+			});
+		}
+
+		function updateClocks() {
+			const now = new Date();
+			const hh = String(now.getHours()).padStart(2, '0');
+			const mm = String(now.getMinutes()).padStart(2, '0');
+			const ss = String(now.getSeconds()).padStart(2, '0');
+			document.getElementById('hero-clock').innerHTML = `${hh}:${mm}:<span class="seconds">${ss}</span>`;
+
+			const locale = currentLang === 'zh' ? 'zh-CN' : 'en-US';
+			document.getElementById('hero-date').textContent = now.toLocaleDateString(locale, {
+				weekday: 'long',
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric'
+			});
+
+			const utcH = String(now.getUTCHours()).padStart(2, '0');
+			const utcM = String(now.getUTCMinutes()).padStart(2, '0');
+			const utcS = String(now.getUTCSeconds()).padStart(2, '0');
+			document.getElementById('hero-utc').textContent = `UTC ${utcH}:${utcM}:${utcS}`;
+
+			document.querySelectorAll('[data-tz]').forEach(el => {
+				el.textContent = now.toLocaleTimeString('en-US', {
+					timeZone: el.dataset.tz,
+					hour12: false,
+					hour: '2-digit',
+					minute: '2-digit',
+					second: '2-digit'
+				});
+			});
+			document.querySelectorAll('[data-tz-date]').forEach(el => {
+				el.textContent = now.toLocaleDateString(locale, {
+					timeZone: el.dataset.tzDate,
+					month: 'short',
+					day: 'numeric'
+				});
+			});
+		}
+
+		/* ═══════════════════ SYNC ═══════════════════ */
+		function updateSync() {
+			document.getElementById('user-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			const offset = (Math.random() * 0.01 - 0.005).toFixed(3);
+			const el = document.getElementById('sync-offset');
+			el.textContent = (offset >= 0 ? '+' : '') + offset;
+			el.className = 'sync-offset mono' + (Math.abs(offset) > 0.003 ? ' warn' : '');
+		}
+
+		/* ═══════════════════ ARCHIVE ═══════════════════ */
+		const ANOMALY_TYPES = ['Temporal Drift', 'Clock Desync', 'Timestamp Anomaly', 'Phase Shift', 'Sync Loss',
+			'Temporal Echo', 'Frequency Deviation', 'Signal Decay', 'Chronometric Fault', 'Reference Lost'
+		];
+
+		function generateArchiveData() {
+			const data = [];
+			data.push({
+				id: 'TG-0001',
+				ts: '2019.11.08 03:33:01',
+				type: 'Origin Event',
+				status: 'archived',
+				clickable: false
+			});
+			data.push({
+				id: 'TG-0003',
+				ts: '2019.12.01 04:07:52',
+				type: 'Temporal Drift',
+				status: 'disconnected',
+				clickable: false
+			});
+			data.push({
+				id: 'TG-0847',
+				ts: '2023.04.17 03:41:28',
+				type: 'Chronometric Fault',
+				status: 'archived',
+				clickable: true
+			});
+			data.push({
+				id: 'TG-1842',
+				ts: '2024.09.17 21:17:53',
+				type: 'Sync Loss',
+				status: 'archived',
+				clickable: true
+			});
+
+			for (let i = 0; i < 16; i++) {
+				const num = String(Math.floor(Math.random() * 1800) + 2).padStart(4, '0');
+				const y = 2019 + Math.floor(Math.random() * 6);
+				const m = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+				const d = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+				const h = String(Math.floor(Math.random() * 24)).padStart(2, '0');
+				const mi = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+				const s = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+				data.push({
+					id: `TG-${num}`,
+					ts: `${y}.${m}.${d} ${h}:${mi}:${s}`,
+					type: ANOMALY_TYPES[Math.floor(Math.random() * ANOMALY_TYPES.length)],
+					status: Math.random() < 0.08 ? 'disconnected' : 'archived',
+					clickable: false
+				});
+			}
+
+			const now = new Date();
+			data.push({
+				id: 'TG-1847',
+				ts: `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`,
+				type: 'Pending Classification',
+				status: 'connected',
+				clickable: false
+			});
+
+			data.sort((a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]));
+			return data;
+		}
+
+		let archiveData = generateArchiveData();
+		let currentFilter = 'all';
+
+		function renderArchive(filter) {
+			const tbody = document.getElementById('archive-tbody');
+			tbody.innerHTML = '';
+			const t = I18N[currentLang];
+			const filtered = filter === 'all' ? archiveData : archiveData.filter(r => r.status === filter);
+
+			filtered.forEach(r => {
+				const tr = document.createElement('tr');
+				if (r.clickable) tr.className = 'clickable-row';
+				const statusLabel = t[`status_${r.status}`] || r.status;
+				tr.innerHTML = `
+      <td class="id-cell">${r.id}</td>
+      <td class="mono" style="color:var(--dim);font-size:11px">${r.ts}</td>
+      <td><span class="anomaly-tag">${r.type}</span></td>
+      <td><span class="status-badge status-${r.status}"><span class="status-dot"></span>${statusLabel}</span></td>
+    `;
+				tbody.appendChild(tr);
+			});
+			document.getElementById('page-info').textContent = `1-${filtered.length} of ${archiveData.length} records`;
+		}
+
+		function filterArchive(filter, btn) {
+			currentFilter = filter;
+			document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+			if (btn) btn.classList.add('active');
+			renderArchive(filter);
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.getElementById('archive-search-input').addEventListener('input', e => {
+				const q = e.target.value.toLowerCase();
+				document.getElementById('archive-tbody').querySelectorAll('tr').forEach(tr => {
+					tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+				});
+			});
+		});
+
+		/* ═══════════════════ MODAL ═══════════════════ */
+		function openModal() {
+			document.getElementById('login-modal').classList.add('open');
+		}
+
+		function closeModal() {
+			document.getElementById('login-modal').classList.remove('open');
+		}
+		document.getElementById('login-modal').addEventListener('click', e => {
+			if (e.target === e.currentTarget) closeModal();
+		});
+
+		function attemptLogin() {
+			const id = document.getElementById('login-id').value;
+			const key = document.getElementById('login-key').value;
+			console.log('Login attempt:', id, key);
+		}
+
+		/* ═══════════════════ VISITORS ═══════════════════ */
+		function updateVisitorCount() {
+			const t = I18N[currentLang];
+			const base = 284719;
+			const daysSince = Math.floor((Date.now() - new Date('2019-11-08').getTime()) / 86400000);
+			const count = base + daysSince * 3 + Math.floor(Math.random() * 5);
+			document.getElementById('visitor-count').textContent = `${t.visitors}: ${count.toLocaleString()}`;
+		}
+
+		/* ═══════════════════ INIT ═══════════════════ */
+		buildTZGrid();
+		renderArchive('all');
+		updateClocks();
+		updateSync();
+		updateVisitorCount();
+		applyI18n();
+		setInterval(updateClocks, 1000);
+		setInterval(updateSync, 5000);
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,3813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Windows 98 Simulator</title>
+	<link rel="stylesheet" href="https://unpkg.com/98.css">
+	<style>
+		/* ===== RESET ===== */
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			font-family: "Pixelated MS Sans Serif", Arial, sans-serif;
+		}
+
+		#app {
+			width: 100%;
+			height: 100%;
+		}
+
+		/* ===== BOOT SCREEN ===== */
+		.boot-screen {
+			position: fixed;
+			inset: 0;
+			background: #000;
+			color: #ccc;
+			font-family: 'Courier New', monospace;
+			font-size: 13px;
+			padding: 24px;
+			overflow: hidden;
+			line-height: 1.5;
+			z-index: 100000;
+			transition: opacity 0.5s;
+		}
+
+		.boot-cursor {
+			display: inline-block;
+			width: 8px;
+			height: 14px;
+			background: #ccc;
+			animation: blink 0.5s step-end infinite;
+		}
+
+		@keyframes blink {
+			50% {
+				opacity: 0;
+			}
+		}
+
+		/* ===== LOADING ===== */
+		@keyframes progressMove {
+			0% {
+				background-position: 0 0;
+			}
+
+			100% {
+				background-position: 30px 0;
+			}
+		}
+
+		.progress-bar-anim {
+			background: repeating-linear-gradient(90deg, #000000 0 10px, #1010cf 10px 20px);
+			background-size: 30px 100%;
+			animation: progressMove 0.4s linear infinite;
+			height: 100%;
+		}
+
+		.loading-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.25);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 99999;
+		}
+
+		/* ===== WINDOW ANIMATION ===== */
+		@keyframes windowFadeIn {
+			from {
+				opacity: 0;
+			}
+
+			to {
+				opacity: 1;
+			}
+		}
+
+		.window-animate-in {
+			animation: windowFadeIn 0.12s ease-out forwards;
+		}
+
+		/* ===== DESKTOP ===== */
+		#desktop-area {
+			flex: 1;
+			position: relative;
+			background: #008080;
+			overflow: hidden;
+		}
+
+		/* ===== DESKTOP ICONS ===== */
+		.desktop-icon {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+			width: 76px;
+			background: transparent;
+			border: 2px solid transparent;
+			cursor: pointer;
+			padding: 6px;
+			user-select: none;
+		}
+
+		.desktop-icon span {
+			font-size: 11px;
+			color: #fff;
+			font-weight: bold;
+			text-shadow: 1px 1px 2px #000;
+			text-align: center;
+		}
+
+		/* ===== CONTEXT MENU ===== */
+		.ctx-item {
+			display: block;
+			width: 100%;
+			text-align: left;
+			background: transparent;
+			border: none;
+			padding: 4px 24px;
+			font-size: 11px;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
+		.ctx-item:hover {
+			background: #000080;
+			color: #fff;
+		}
+
+		.ctx-item-bold {
+			font-weight: bold;
+		}
+
+		.ctx-item-disabled {
+			color: #808080;
+			pointer-events: none;
+		}
+
+		.ctx-sep {
+			border-top: 1px solid #808080;
+			border-bottom: 1px solid #fff;
+			margin: 2px 0;
+		}
+
+		/* ===== TASKBAR ===== */
+		.taskbar {
+			display: flex;
+			align-items: center;
+			height: 40px;
+			flex-shrink: 0;
+			background: #c0c0c0;
+			border-top: 2px outset #dfdfdf;
+			padding: 2px 4px;
+		}
+
+		.taskbar-btn {
+			padding: 2px 8px;
+			font-size: 11px;
+			min-width: 100px;
+			max-width: 160px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			background: #c0c0c0;
+			border: 2px outset #dfdfdf;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			height: 26px;
+			cursor: pointer;
+		}
+
+		.taskbar-btn.active {
+			border: 2px inset #808080;
+			background: #b0b0b0;
+		}
+
+		.taskbar-divider {
+			width: 1px;
+			height: 28px;
+			border-left: 1px solid #808080;
+			border-right: 1px solid #fff;
+			margin: 0 4px;
+		}
+
+		/* ===== START MENU ===== */
+		.start-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			width: 100%;
+			text-align: left;
+			padding: 4px 12px;
+			background: transparent;
+			border: none;
+			cursor: pointer;
+			font-size: 12px;
+		}
+
+		.start-item:hover {
+			background: #000080;
+			color: #fff;
+		}
+
+		/* ===== FILE ITEMS ===== */
+		.file-item {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+			padding: 6px 4px;
+			cursor: default;
+			user-select: none;
+		}
+
+		.file-item.selected {
+			background: #000080;
+			color: #fff;
+		}
+
+		/* ===== RESIZE HANDLES ===== */
+		.resize-handle {
+			position: absolute;
+			z-index: 1;
+		}
+
+		.resize-n {
+			top: -4px;
+			left: 4px;
+			right: 4px;
+			height: 8px;
+			cursor: n-resize;
+		}
+
+		.resize-s {
+			bottom: -4px;
+			left: 4px;
+			right: 4px;
+			height: 8px;
+			cursor: s-resize;
+		}
+
+		.resize-e {
+			right: -4px;
+			top: 4px;
+			bottom: 4px;
+			width: 8px;
+			cursor: e-resize;
+		}
+
+		.resize-w {
+			left: -4px;
+			top: 4px;
+			bottom: 4px;
+			width: 8px;
+			cursor: w-resize;
+		}
+
+		.resize-ne {
+			top: -4px;
+			right: -4px;
+			width: 12px;
+			height: 12px;
+			cursor: ne-resize;
+		}
+
+		.resize-nw {
+			top: -4px;
+			left: -4px;
+			width: 12px;
+			height: 12px;
+			cursor: nw-resize;
+		}
+
+		.resize-se {
+			bottom: -4px;
+			right: -4px;
+			width: 12px;
+			height: 12px;
+			cursor: se-resize;
+		}
+
+		.resize-sw {
+			bottom: -4px;
+			left: -4px;
+			width: 12px;
+			height: 12px;
+			cursor: sw-resize;
+		}
+
+		/* Window body is flex-column; fixed bars don't shrink, flex:1 items do (inline style wins) */
+		.window-body>* {
+			flex-shrink: 0;
+		}
+
+		/* ===== SHUTDOWN / TRANSITION SCREENS ===== */
+		.screen-overlay {
+			position: fixed;
+			inset: 0;
+			z-index: 200000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.shutdown-screen {
+			background: #000;
+			color: #f0a030;
+			font-family: 'Courier New', monospace;
+			font-size: 24px;
+			flex-direction: column;
+			gap: 40px;
+			text-align: center;
+		}
+
+		.shutdown-screen .power-btn {
+			background: #333;
+			color: #aaa;
+			border: 2px outset #555;
+			padding: 8px 24px;
+			font-size: 14px;
+			cursor: pointer;
+			font-family: Arial, sans-serif;
+		}
+
+		.shutdown-screen .power-btn:hover {
+			background: #444;
+			color: #fff;
+		}
+
+		.transition-screen {
+			background: #000080;
+			color: #fff;
+			font-family: Arial, sans-serif;
+			font-size: 18px;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		/* ===== MISC ===== */
+		.menu-btn {
+			background: transparent;
+			border: none;
+			padding: 1px 6px;
+			font-size: 11px;
+			cursor: pointer;
+		}
+
+		.toolbar-btn {
+			font-size: 11px;
+			padding: 2px 8px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app"></div>
+
+	<script>
+		// ╔══════════════════════════════════════════════════════════════╗
+		// ║  ARCHITECTURE OVERVIEW                                       ║
+		// ║                                                              ║
+		// ║  OLD: innerHTML="" on every state change → destroys DOM      ║
+		// ║       → breaks drag handles, causes flicker                  ║
+		// ║                                                              ║
+		// ║  NEW: Create elements ONCE, update them IN PLACE.            ║
+		// ║       Windows are appended/removed individually.             ║
+		// ║       Drag handlers live on persistent DOM elements.         ║
+		// ║                                                              ║
+		// ║  Modules:                                                    ║
+		// ║   1. h()          — DOM helper to create elements            ║
+		// ║   2. FileSystem   — virtual C: and D: drives                 ║
+		// ║   3. ContextMenu  — singleton right-click menu               ║
+		// ║   4. Interaction   — drag + resize any window                ║
+		// ║   5. WindowShell  — creates a win98 window frame             ║
+		// ║   6. Taskbar      — bottom bar with window buttons           ║
+		// ║   7. StartMenu    — the Start popup                          ║
+		// ║   8. Screens      — Boot, Login, Desktop setup               ║
+		// ║   9. App windows  — MyComputer, Explorer, Browser, Notepad   ║
+		// ║  10. App          — top-level state and orchestration         ║
+		// ╚══════════════════════════════════════════════════════════════╝
+
+
+		// ============================================================
+		// 1. DOM HELPER
+		//    h("div", { className:"foo", onClick:fn }, "text", childEl)
+		// ============================================================
+		function h(tag, attrs, ...children) {
+			const el = document.createElement(tag);
+			if (attrs) {
+				for (const [k, v] of Object.entries(attrs)) {
+					if (k === "style" && typeof v === "object") Object.assign(el.style, v);
+					else if (k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(), v);
+					else if (k === "className") el.className = v;
+					else if (k === "innerHTML") el.innerHTML = v;
+					else el.setAttribute(k, v);
+				}
+			}
+			for (const c of children) {
+				if (c == null) continue;
+				if (typeof c === "string") el.appendChild(document.createTextNode(c));
+				else if (Array.isArray(c)) c.forEach(x => x && el.appendChild(x));
+				else el.appendChild(c);
+			}
+			return el;
+		}
+
+
+		// ============================================================
+		// 2. FILE SYSTEM
+		//    Virtual folder/file tree. Supports navigation and writes.
+		// ============================================================
+		const FileSystem = {
+			drives: {
+				"C:": [{
+						name: "Windows",
+						type: "folder",
+						children: [{
+								name: "System",
+								type: "folder",
+								children: [{
+										name: "kernel32.dll",
+										type: "file",
+										content: "[Binary file]"
+									},
+									{
+										name: "user32.dll",
+										type: "file",
+										content: "[Binary file]"
+									},
+									{
+										name: "gdi32.dll",
+										type: "file",
+										content: "[Binary file]"
+									},
+								]
+							},
+							{
+								name: "System32",
+								type: "folder",
+								children: [{
+										name: "drivers",
+										type: "folder",
+										children: [{
+											name: "etc",
+											type: "folder",
+											children: [{
+												name: "hosts.txt",
+												type: "file",
+												content: "# Copyright (c) 1998 Microsoft Corp.\n127.0.0.1       localhost"
+											}, ]
+										}, ]
+									},
+									{
+										name: "config.sys",
+										type: "file",
+										content: "DEVICE=C:\\WINDOWS\\HIMEM.SYS\nDEVICE=C:\\WINDOWS\\EMM386.EXE NOEMS"
+									},
+									{
+										name: "cmd.exe",
+										type: "file",
+										content: "[Binary file]"
+									},
+								]
+							},
+							{
+								name: "Desktop",
+								type: "folder",
+								children: []
+							},
+							{
+								name: "win.ini",
+								type: "file",
+								content: "; for 16-bit app support\n[fonts]\n[extensions]"
+							},
+						]
+					},
+					{
+						name: "Program Files",
+						type: "folder",
+						children: [{
+								name: "Internet Explorer",
+								type: "folder",
+								children: [{
+										name: "iexplore.exe",
+										type: "file",
+										content: "[Binary file]"
+									},
+									{
+										name: "readme.txt",
+										type: "file",
+										content: "Internet Explorer 5.0\nCopyright (c) 1998 Microsoft Corporation"
+									},
+								]
+							},
+							{
+								name: "Accessories",
+								type: "folder",
+								children: [{
+										name: "notepad.exe",
+										type: "file",
+										content: "[Binary file]"
+									},
+									{
+										name: "calc.exe",
+										type: "file",
+										content: "[Binary file]"
+									},
+								]
+							},
+						]
+					},
+					{
+						name: "Documents",
+						type: "folder",
+						children: [{
+								name: "letter.txt",
+								type: "file",
+								content: "Dear Friend,\n\nI hope this letter finds you well.\nI am writing to you from my new Windows 98 computer!\n\nBest regards,\nAdministrator"
+							},
+							{
+								name: "todo.txt",
+								type: "file",
+								content: "TODO List:\n=========\n[x] Install Windows 98\n[x] Set up Internet Explorer\n[ ] Install Office 97\n[ ] Configure dial-up modem"
+							},
+							{
+								name: "notes.txt",
+								type: "file",
+								content: "Meeting Notes - 1998/03/15\n==========================\nAttendees: John, Mary, Bob\nTopics: Q1 revenue, New website, Y2K plan"
+							},
+							{
+								name: "Work",
+								type: "folder",
+								children: [{
+										name: "report.txt",
+										type: "file",
+										content: "Quarterly Report - Q1 1998\n\nRevenue increased 15% over previous quarter."
+									},
+									{
+										name: "budget.txt",
+										type: "file",
+										content: "Department Budget 1998\n=====================\nHardware: $15,000\nSoftware: $8,000\nTotal: $23,000"
+									},
+								]
+							},
+						]
+					},
+					{
+						name: "My Pictures",
+						type: "folder",
+						children: [{
+								name: "vacation",
+								type: "folder",
+								children: []
+							},
+							{
+								name: "wallpaper.bmp",
+								type: "file",
+								content: "[Binary image file]"
+							},
+						]
+					},
+					{
+						name: "readme.txt",
+						type: "file",
+						content: "Welcome to Windows 98!\nSystem Requirements: 486DX/66 MHz, 16 MB RAM, 300 MB HDD"
+					},
+					{
+						name: "autoexec.bat",
+						type: "file",
+						content: "@ECHO OFF\nPROMPT $p$g\nSET TEMP=C:\\WINDOWS\\TEMP\nPATH=C:\\WINDOWS;C:\\WINDOWS\\COMMAND"
+					},
+					{
+						name: "config.sys",
+						type: "file",
+						content: "DEVICE=C:\\WINDOWS\\HIMEM.SYS\nFILES=40\nBUFFERS=20"
+					},
+				],
+				"D:": [{
+						name: "Games",
+						type: "folder",
+						children: [{
+								name: "Minesweeper",
+								type: "folder",
+								children: [{
+										name: "winmine.exe",
+										type: "file",
+										content: "[Binary file]"
+									},
+									{
+										name: "readme.txt",
+										type: "file",
+										content: "Minesweeper v3.1\nClick to reveal. Right-click to flag."
+									},
+								]
+							},
+							{
+								name: "Solitaire",
+								type: "folder",
+								children: []
+							},
+						]
+					},
+					{
+						name: "Music",
+						type: "folder",
+						children: [{
+								name: "canyon.mid",
+								type: "file",
+								content: "[MIDI file]"
+							},
+							{
+								name: "passport.mid",
+								type: "file",
+								content: "[MIDI file]"
+							},
+						]
+					},
+					{
+						name: "Backup",
+						type: "folder",
+						children: [{
+							name: "backup_log.txt",
+							type: "file",
+							content: "Backup Log - 1998/01/15\nFiles: 1,247 | Size: 156 MB | Status: Complete"
+						}, ]
+					},
+					{
+						name: "readme.txt",
+						type: "file",
+						content: "Data Drive D:\\\nUsed for games, music, and backups."
+					},
+				]
+			},
+
+			// Navigate into a path, return the entries array at that location
+			resolve(drive, pathArray) {
+				let entries = this.drives[drive] || this.drives["C:"];
+				for (const name of pathArray) {
+					const folder = entries.find(e => e.name === name && e.type === "folder");
+					if (!folder || !folder.children) return [];
+					entries = folder.children;
+				}
+				return entries;
+			},
+
+			// Save or overwrite a file at a specific path
+			saveFile(drive, pathArray, fileName, content) {
+				const folder = this.resolve(drive, pathArray);
+				const existing = folder.find(e => e.name === fileName && e.type === "file");
+				if (existing) {
+					existing.content = content;
+				} else {
+					folder.push({
+						name: fileName,
+						type: "file",
+						content
+					});
+				}
+			},
+
+			// Get icon emoji for a file entry
+			icon(entry) {
+				if (entry.type === "folder") return "\u{1F4C1}";
+				const ext = entry.name.split(".").pop().toLowerCase();
+				return {
+					txt: "\u{1F4C4}",
+					bat: "\u2699\uFE0F",
+					exe: "\u{1F4BE}",
+					dll: "\u2699\uFE0F",
+					ini: "\u{1F527}",
+					sys: "\u{1F527}",
+					bmp: "\u{1F5BC}\uFE0F",
+					mid: "\u{1F3B5}"
+				} [ext] || "\u{1F4C4}";
+			},
+
+			// Can this file be opened in notepad?
+			canOpen(name) {
+				const ext = name.split(".").pop().toLowerCase();
+				return ["txt", "bat", "ini", "sys", "cfg"].includes(ext);
+			}
+		};
+
+
+		// ============================================================
+		// 3. CONTEXT MENU
+		//    Only one can exist at a time. Click anywhere to close it.
+		//    Usage: ContextMenu.show(x, y, [ {label, action, bold}, "sep", ... ])
+		// ============================================================
+		const ContextMenu = {
+			el: null,
+
+			show(x, y, items) {
+				this.hide(); // enforce single instance
+				const menu = h("div", {
+						className: "window",
+						style: {
+							position: "fixed",
+							left: x + "px",
+							top: y + "px",
+							zIndex: 100000,
+							minWidth: "160px"
+						},
+						onMousedown: (e) => e.stopPropagation(),
+					},
+					h("div", {
+							className: "window-body",
+							style: {
+								padding: "0",
+								margin: "0"
+							}
+						},
+						items.map(item => {
+							if (item === "sep") return h("div", {
+								className: "ctx-sep"
+							});
+							const cls = "ctx-item" + (item.bold ? " ctx-item-bold" : "") + (item.disabled ?
+								" ctx-item-disabled" : "");
+							return h("button", {
+								className: cls,
+								onClick: () => {
+									this.hide();
+									if (item.action && !item.disabled) item.action();
+								},
+							}, item.label);
+						})
+					)
+				);
+				document.body.appendChild(menu);
+				this.el = menu;
+			},
+
+			hide() {
+				if (this.el) {
+					this.el.remove();
+					this.el = null;
+				}
+			}
+		};
+
+
+		// ============================================================
+		// 4. INTERACTION MANAGER
+		//    Handles both window dragging (title bar) and resizing (edges).
+		//    Single set of global mousemove/mouseup listeners.
+		// ============================================================
+		const Interaction = {
+			mode: null, // null | "drag" | "resize"
+			targetEl: null, // the window DOM element being manipulated
+			posObj: null, // { x, y, z, w, h } — gets mutated live
+			offsetX: 0,
+			offsetY: 0,
+			resizeDir: "", // e.g. "se", "n", "w", "ne"
+			startX: 0, // mouse position at resize start
+			startY: 0,
+			startRect: null, // { x, y, w, h } at resize start
+			minW: 200,
+			minH: 150,
+
+			// -- Drag --
+			makeDraggable(windowEl, handleEl, posObj) {
+				handleEl.style.cursor = "move";
+				handleEl.addEventListener("mousedown", (e) => {
+					if (e.target.tagName === "BUTTON") return;
+					// Don't drag if maximized
+					if (posObj.maximized) return;
+					e.preventDefault();
+					this.mode = "drag";
+					this.targetEl = windowEl;
+					this.posObj = posObj;
+					this.offsetX = e.clientX - posObj.x;
+					this.offsetY = e.clientY - posObj.y;
+				});
+			},
+
+			// -- Resize --
+			makeResizable(windowEl, posObj, minW, minH) {
+				this.minW = minW || 200;
+				this.minH = minH || 150;
+				const dirs = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
+				for (const dir of dirs) {
+					const handle = h("div", {
+						className: "resize-handle resize-" + dir
+					});
+					handle.addEventListener("mousedown", (e) => {
+						if (posObj.maximized) return;
+						e.preventDefault();
+						e.stopPropagation();
+						this.mode = "resize";
+						this.targetEl = windowEl;
+						this.posObj = posObj;
+						this.resizeDir = dir;
+						this.startX = e.clientX;
+						this.startY = e.clientY;
+						this.startRect = {
+							x: posObj.x,
+							y: posObj.y,
+							w: posObj.w,
+							h: posObj.h
+						};
+						this.minW = minW || 200;
+						this.minH = minH || 150;
+					});
+					windowEl.appendChild(handle);
+				}
+			},
+
+			// -- Global listeners (call once) --
+			init() {
+				document.addEventListener("mousemove", (e) => {
+					if (!this.mode) return;
+					if (this.mode === "drag") {
+						this.posObj.x = e.clientX - this.offsetX;
+						this.posObj.y = e.clientY - this.offsetY;
+						this.targetEl.style.transform = `translate(${this.posObj.x}px, ${this.posObj.y}px)`;
+					} else if (this.mode === "resize") {
+						const dx = e.clientX - this.startX;
+						const dy = e.clientY - this.startY;
+						const s = this.startRect;
+						let nx = s.x,
+							ny = s.y,
+							nw = s.w,
+							nh = s.h;
+						const dir = this.resizeDir;
+
+						if (dir.includes("e")) nw = Math.max(this.minW, s.w + dx);
+						if (dir.includes("s")) nh = Math.max(this.minH, s.h + dy);
+						if (dir.includes("w")) {
+							nw = Math.max(this.minW, s.w - dx);
+							nx = s.x + (s.w - nw); // move left edge
+						}
+						if (dir.includes("n")) {
+							nh = Math.max(this.minH, s.h - dy);
+							ny = s.y + (s.h - nh); // move top edge
+						}
+
+						this.posObj.x = nx;
+						this.posObj.y = ny;
+						this.posObj.w = nw;
+						this.posObj.h = nh;
+						this.targetEl.style.transform = `translate(${nx}px, ${ny}px)`;
+						this.targetEl.style.width = nw + "px";
+						this.targetEl.style.height = nh + "px";
+					}
+				});
+				document.addEventListener("mouseup", () => {
+					this.mode = null;
+					this.targetEl = null;
+				});
+			}
+		};
+
+
+		// ============================================================
+		// 5. WINDOW SHELL
+		//    Creates a win98 window frame with drag, resize, maximize.
+		//    pos object: { x, y, z, w, h, maximized, savedRect }
+		// ============================================================
+		function createWindowShell(id, title, opts, pos, {
+			onClose,
+			onMinimize
+		}) {
+			// opts = { width, minW, minH } — width is initial, minW/minH are constraints
+			const initWidth = parseInt(opts.width) || 500;
+			const minW = opts.minW || 200;
+			const minH = opts.minH || 180;
+
+			// Initialize size in pos if not already set
+			if (!pos.w) pos.w = initWidth;
+			if (!pos.h) pos.h = 0; // auto height initially, will be measured
+			pos.maximized = false;
+			pos.savedRect = null;
+
+			const bodyEl = h("div", {
+				className: "window-body",
+				style: {
+					margin: "0",
+					flex: "1",
+					overflow: "hidden",
+					display: "flex",
+					flexDirection: "column"
+				}
+			});
+			const titleText = h("div", {
+				className: "title-bar-text"
+			}, title);
+
+			// Maximize toggle
+			function toggleMaximize() {
+				if (pos.maximized) {
+					// Restore
+					pos.maximized = false;
+					const r = pos.savedRect;
+					pos.x = r.x;
+					pos.y = r.y;
+					pos.w = r.w;
+					pos.h = r.h;
+					el.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+					el.style.width = pos.w + "px";
+					el.style.height = pos.h + "px";
+				} else {
+					// Save current rect, then maximize to fill desktop
+					pos.savedRect = {
+						x: pos.x,
+						y: pos.y,
+						w: pos.w,
+						h: pos.h
+					};
+					pos.maximized = true;
+					const da = document.getElementById("desktop-area");
+					const dw = da ? da.clientWidth : window.innerWidth;
+					const dh = da ? da.clientHeight : window.innerHeight - 40;
+					pos.x = 0;
+					pos.y = 0;
+					pos.w = dw;
+					pos.h = dh;
+					el.style.transform = `translate(0px, 0px)`;
+					el.style.width = dw + "px";
+					el.style.height = dh + "px";
+				}
+			}
+
+			const titleBar = h("div", {
+					className: "title-bar"
+				},
+				titleText,
+				h("div", {
+						className: "title-bar-controls"
+					},
+					h("button", {
+						"aria-label": "Minimize",
+						onClick: (e) => {
+							e.stopPropagation();
+							onMinimize();
+						}
+					}),
+					h("button", {
+						"aria-label": "Maximize",
+						onClick: (e) => {
+							e.stopPropagation();
+							toggleMaximize();
+						}
+					}),
+					h("button", {
+						"aria-label": "Close",
+						onClick: (e) => {
+							e.stopPropagation();
+							onClose();
+						}
+					}),
+				)
+			);
+
+			// Double-click title bar to toggle maximize
+			titleBar.addEventListener("dblclick", (e) => {
+				if (e.target.tagName === "BUTTON") return;
+				toggleMaximize();
+			});
+
+			const el = h("div", {
+				className: "window window-animate-in",
+				style: {
+					position: "absolute",
+					top: "0",
+					left: "0",
+					width: pos.w + "px",
+					zIndex: pos.z,
+					transform: `translate(${pos.x}px, ${pos.y}px)`,
+					display: "flex",
+					flexDirection: "column",
+				},
+				onMousedown: () => App.bringToFront(id),
+			}, titleBar, bodyEl);
+
+			setTimeout(() => {
+				el.classList.remove("window-animate-in");
+				// Measure actual height on first render, ensure it meets minimum
+				if (!pos.h || pos.h === 0) {
+					pos.h = Math.max(minH, el.offsetHeight);
+					el.style.height = pos.h + "px";
+				}
+			}, 50);
+
+			// Drag
+			Interaction.makeDraggable(el, titleBar, pos);
+			// Resize handles (8 directions)
+			Interaction.makeResizable(el, pos, minW, minH);
+
+			return {
+				el,
+				bodyEl,
+				setTitle(t) {
+					titleText.textContent = t;
+				},
+				setActive(isActive) {
+					titleBar.className = isActive ? "title-bar" : "title-bar inactive";
+				},
+				setZ(z) {
+					el.style.zIndex = z;
+				},
+				show() {
+					el.style.display = "flex";
+				},
+				hide() {
+					el.style.display = "none";
+				},
+				destroy() {
+					el.remove();
+				},
+				toggleMaximize,
+			};
+		}
+
+
+		// ============================================================
+		// 6. TASKBAR
+		//    Created once. Only the button area gets rebuilt on changes.
+		// ============================================================
+		const Taskbar = {
+			el: null,
+			btnArea: null,
+			clockEl: null,
+
+			create() {
+				this.btnArea = h("div", {
+					style: {
+						flex: "1",
+						display: "flex",
+						gap: "3px",
+						padding: "0 4px",
+						overflow: "hidden"
+					}
+				});
+				this.clockEl = h("span", {
+					style: {
+						fontSize: "11px"
+					}
+				}, this._time());
+
+				this.el = h("div", {
+						className: "taskbar",
+						onContextmenu: (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						},
+						onClick: (e) => e.stopPropagation(),
+						onMousedown: (e) => e.stopPropagation(),
+					},
+					h("button", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "4px",
+								padding: "4px 8px",
+								fontWeight: "bold"
+							},
+							onClick: (e) => {
+								e.stopPropagation();
+								StartMenu.toggle();
+							},
+						},
+						h("span", {
+							innerHTML: '<svg width="20" height="20" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" fill="#008080"/><rect x="4" y="6" width="5" height="5" fill="#000080"/><rect x="11" y="6" width="5" height="5" fill="red"/><rect x="4" y="12" width="5" height="5" fill="#FF0"/><rect x="11" y="12" width="5" height="5" fill="#0F0"/></svg>'
+						}),
+						h("span", null, "Start"),
+					),
+					h("div", {
+						className: "taskbar-divider"
+					}),
+					this.btnArea,
+					h("div", {
+						className: "taskbar-divider"
+					}),
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "8px",
+								border: "1px inset #dfdfdf",
+								padding: "2px 8px"
+							}
+						},
+						h("span", {
+							style: {
+								fontSize: "11px"
+							}
+						}, "\u{1F50A}"),
+						this.clockEl,
+					),
+				);
+
+				setInterval(() => {
+					this.clockEl.textContent = this._time();
+				}, 60000);
+				return this.el;
+			},
+
+			_time() {
+				return new Date().toLocaleTimeString("en-US", {
+					hour: "numeric",
+					minute: "2-digit",
+					hour12: true
+				});
+			},
+
+			// Only rebuild the buttons — called when windows open/close/minimize
+			updateButtons() {
+				this.btnArea.innerHTML = "";
+				for (const id of App.state.openList) {
+					const info = App.state.windows[id];
+					if (!info) continue;
+					const isActive = App.state.activeWin === id && !info.minimized;
+					this.btnArea.appendChild(h("button", {
+						className: "taskbar-btn" + (isActive ? " active" : ""),
+						onClick: () => {
+							if (info.minimized) App.restoreWindow(id);
+							else if (App.state.activeWin === id) App.minimizeWindow(id);
+							else App.bringToFront(id);
+						},
+					}, info.title));
+				}
+			}
+		};
+
+
+		// ============================================================
+		// 7. START MENU
+		// ============================================================
+		const StartMenu = {
+			el: null,
+			visible: false,
+
+			create() {
+				const itemsDiv = h("div", {
+					style: {
+						flex: "1"
+					}
+				});
+
+				// --- Programs section ---
+				const progDiv = h("div", {
+					style: {
+						borderBottom: "1px solid #808080",
+						padding: "4px 0"
+					}
+				});
+				[{
+						label: "\u{1F4BB}  My Computer",
+						action: () => App.openApp("my-computer")
+					},
+					{
+						label: "\u{1F4C1}  Windows Explorer",
+						action: () => App.openApp("file-system")
+					},
+					{
+						label: "\u{1F310}  Internet Explorer",
+						action: () => App.openApp("browser")
+					},
+					{
+						label: "\u{1F4C4}  Notepad",
+						action: () => App.newNote()
+					},
+				].forEach(p => {
+					progDiv.appendChild(h("button", {
+						className: "start-item",
+						onClick: () => {
+							this.hide();
+							p.action();
+						}
+					}, p.label));
+				});
+				itemsDiv.appendChild(progDiv);
+
+				// --- Utilities section ---
+				const utilDiv = h("div", {
+					style: {
+						borderBottom: "1px solid #808080",
+						padding: "4px 0"
+					}
+				});
+				[{
+						label: "\u{1F50D}  Find Files...",
+						action: () => App.openApp("find")
+					},
+					{
+						label: "\u2699\uFE0F  Control Panel",
+						action: () => App.openApp("control-panel")
+					},
+					{
+						label: "\u2753  Help",
+						action: () => App.openApp("help")
+					},
+					{
+						label: "\u25B6\uFE0F  Run...",
+						action: () => App.showRunDialog()
+					},
+				].forEach(p => {
+					utilDiv.appendChild(h("button", {
+						className: "start-item",
+						onClick: () => {
+							this.hide();
+							p.action();
+						}
+					}, p.label));
+				});
+				itemsDiv.appendChild(utilDiv);
+
+				// --- System section ---
+				const sysDiv = h("div", {
+					style: {
+						padding: "4px 0"
+					}
+				});
+				sysDiv.appendChild(h("button", {
+					className: "start-item",
+					onClick: () => {
+						this.hide();
+						App.showLogOffDialog();
+					}
+				}, "\u{1F6AA}  Log Off..."));
+				sysDiv.appendChild(h("button", {
+					className: "start-item",
+					onClick: () => {
+						this.hide();
+						App.showShutDownDialog();
+					}
+				}, "\u23FB  Shut Down..."));
+				itemsDiv.appendChild(sysDiv);
+
+				this.el = h("div", {
+						className: "window",
+						style: {
+							position: "fixed",
+							bottom: "40px",
+							left: "0",
+							width: "250px",
+							zIndex: 100001,
+							display: "none"
+						},
+						onClick: (e) => e.stopPropagation(),
+						onMousedown: (e) => e.stopPropagation(),
+					},
+					h("div", {
+							className: "window-body",
+							style: {
+								padding: "0"
+							}
+						},
+						h("div", {
+								style: {
+									display: "flex"
+								}
+							},
+							h("div", {
+									style: {
+										width: "24px",
+										background: "#000080",
+										display: "flex",
+										alignItems: "flex-end",
+										justifyContent: "center",
+										paddingBottom: "8px"
+									}
+								},
+								h("span", {
+									style: {
+										color: "#fff",
+										fontSize: "11px",
+										writingMode: "vertical-rl",
+										transform: "rotate(180deg)",
+										fontWeight: "bold",
+										letterSpacing: "2px"
+									}
+								}, "Windows 98"),
+							),
+							itemsDiv,
+						)
+					)
+				);
+				document.body.appendChild(this.el);
+			},
+
+			toggle() {
+				this.visible ? this.hide() : this.show();
+			},
+			show() {
+				ContextMenu.hide();
+				this.visible = true;
+				this.el.style.display = "";
+			},
+			hide() {
+				this.visible = false;
+				if (this.el) this.el.style.display = "none";
+			},
+		};
+
+
+		// ============================================================
+		// 8. SCREENS — Boot, Login, Desktop setup
+		// ============================================================
+
+		function showBootScreen(onDone) {
+			const app = document.getElementById("app");
+			app.innerHTML = "";
+			const scr = h("div", {
+				className: "boot-screen"
+			});
+			app.appendChild(scr);
+
+			const msgs = [
+				"Starting Windows 98...", "Initializing system devices...", "Loading device drivers...",
+				"HIMEM is testing extended memory...done.", "Loading COMMAND.COM...", "Processing CONFIG.SYS...",
+				"Processing AUTOEXEC.BAT...", "Starting MS-DOS...", "Loading Windows kernel...",
+				"Initializing virtual device drivers:", "  VMOUSE.VXD", "  VFAT.VXD", "  VCACHE.VXD",
+				"  VWIN32.VXD", "  VCOMM.VXD", "Loading system configuration...", "Starting Windows subsystem...",
+				"Initializing display adapter...", "Loading Explorer shell...", "Starting network services...",
+				"Loading user profile...", "System initialization complete.", "",
+				"Microsoft Windows 98", "Copyright \u00A9 Microsoft Corp 1981-1998.", "", "Press any key to continue...",
+			];
+			let idx = 0;
+
+			function tick() {
+				if (idx >= msgs.length) {
+					setTimeout(() => {
+						scr.style.opacity = "0";
+						setTimeout(onDone, 500);
+					}, 1500);
+					return;
+				}
+				scr.appendChild(h("div", null, msgs[idx]));
+				const old = scr.querySelector(".boot-cursor");
+				if (old) old.remove();
+				if (idx < msgs.length - 1) scr.appendChild(h("span", {
+					className: "boot-cursor"
+				}));
+				scr.scrollTop = scr.scrollHeight;
+				idx++;
+				setTimeout(tick, idx > 20 ? 400 : idx > 15 ? 200 : idx > 10 ? 100 : 50);
+			}
+			setTimeout(tick, 500);
+		}
+
+		function showLoginScreen(onLogin) {
+			const app = document.getElementById("app");
+			app.innerHTML = "";
+			const bg = h("div", {
+				style: {
+					width: "100%",
+					height: "100%",
+					background: "#008080",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center"
+				}
+			});
+			const unInput = h("input", {
+				type: "text",
+				placeholder: "Administrator"
+			});
+			const pwInput = h("input", {
+				type: "password"
+			});
+
+			function doLogin() {
+				const name = unInput.value.trim() || "Administrator";
+				const overlay = h("div", {
+						className: "loading-overlay"
+					},
+					h("div", {
+							className: "window",
+							style: {
+								width: "300px"
+							}
+						},
+						h("div", {
+							className: "title-bar"
+						}, h("div", {
+							className: "title-bar-text"
+						}, "Please Wait")),
+						h("div", {
+								className: "window-body"
+							},
+							h("div", {
+									style: {
+										display: "flex",
+										alignItems: "center",
+										gap: "12px",
+										marginBottom: "12px"
+									}
+								},
+								h("span", {
+									style: {
+										fontSize: "24px"
+									}
+								}, "\u23F3"),
+								h("p", {
+									style: {
+										margin: "0"
+									}
+								}, "Loading your personal settings..."),
+							),
+							h("div", {
+								style: {
+									height: "20px",
+									border: "2px inset #fff",
+									padding: "2px"
+								}
+							}, h("div", {
+								className: "progress-bar-anim"
+							})),
+						),
+					)
+				);
+				document.body.appendChild(overlay);
+				setTimeout(() => {
+					overlay.remove();
+					onLogin(name);
+				}, 400);
+			}
+
+			bg.appendChild(h("div", {
+					className: "window",
+					style: {
+						width: "400px"
+					}
+				},
+				h("div", {
+						className: "title-bar"
+					},
+					h("div", {
+						className: "title-bar-text"
+					}, "Log On to Windows"),
+					h("div", {
+							className: "title-bar-controls"
+						},
+						h("button", {
+							"aria-label": "Minimize",
+							disabled: true
+						}),
+						h("button", {
+							"aria-label": "Maximize",
+							disabled: true
+						}),
+						h("button", {
+							"aria-label": "Close",
+							disabled: true
+						}),
+					)
+				),
+				h("div", {
+						className: "window-body"
+					},
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "12px",
+								marginBottom: "12px"
+							}
+						},
+						h("div", {
+							innerHTML: '<svg width="48" height="48" viewBox="0 0 48 48"><rect x="8" y="8" width="32" height="32" fill="#008080"/><rect x="12" y="16" width="10" height="10" fill="#000080"/><rect x="26" y="16" width="10" height="10" fill="#F00"/><rect x="12" y="28" width="10" height="10" fill="#FF0"/><rect x="26" y="28" width="10" height="10" fill="#0F0"/></svg>'
+						}),
+						h("p", {
+							style: {
+								fontSize: "12px"
+							}
+						}, "Enter your password to log on to Windows."),
+					),
+					h("div", {
+						className: "field-row",
+						style: {
+							marginBottom: "8px"
+						}
+					}, h("label", {
+						style: {
+							display: "inline-block",
+							width: "80px"
+						}
+					}, "User name:"), unInput),
+					h("div", {
+						className: "field-row",
+						style: {
+							marginBottom: "12px"
+						}
+					}, h("label", {
+						style: {
+							display: "inline-block",
+							width: "80px"
+						}
+					}, "Password:"), pwInput),
+					h("div", {
+							style: {
+								display: "flex",
+								justifyContent: "flex-end",
+								gap: "6px"
+							}
+						},
+						h("button", {
+							onClick: doLogin
+						}, "OK"),
+						h("button", {
+							onClick: () => {
+								unInput.value = "";
+								pwInput.value = "";
+							}
+						}, "Cancel"),
+					),
+				)
+			));
+			app.appendChild(bg);
+			setTimeout(() => unInput.focus(), 50);
+		}
+
+		// Creates the persistent desktop skeleton — called ONCE per session
+		function setupDesktop() {
+			const app = document.getElementById("app");
+			app.innerHTML = "";
+
+			const desktopArea = h("div", {
+				id: "desktop-area",
+				onContextmenu: (e) => {
+					e.preventDefault();
+					ContextMenu.show(e.clientX, e.clientY, [{
+							label: "Arrange Icons"
+						}, {
+							label: "Line up Icons"
+						}, "sep",
+						{
+							label: "Refresh"
+						}, "sep",
+						{
+							label: "New Note",
+							bold: true,
+							action: () => App.newNote()
+						},
+						"sep", {
+							label: "Properties"
+						},
+					]);
+				},
+				onClick: () => {
+					ContextMenu.hide();
+					StartMenu.hide();
+				},
+			});
+
+			// Desktop icons
+			const iconArea = h("div", {
+				style: {
+					position: "absolute",
+					top: "12px",
+					left: "12px",
+					display: "flex",
+					flexDirection: "column",
+					gap: "8px",
+					zIndex: 1
+				}
+			});
+			[{
+					id: "my-computer",
+					label: "My Computer",
+					svg: '<svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" fill="#808080" stroke="#000" stroke-width="2"/><rect x="6" y="10" width="20" height="10" fill="#0FF"/><rect x="10" y="24" width="12" height="2" fill="#808080"/><rect x="8" y="26" width="16" height="2" fill="#808080"/></svg>'
+				},
+				{
+					id: "file-system",
+					label: "File System",
+					svg: '<svg width="32" height="32" viewBox="0 0 32 32"><path d="M4 8h10l2 3h12v15H4V8z" fill="#FF0" stroke="#000" stroke-width="2"/><path d="M4 8h10l2 3h12v2H4V8z" fill="orange"/></svg>'
+				},
+				{
+					id: "browser",
+					label: "Browser",
+					svg: '<svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#00F" stroke="#000" stroke-width="2"/><path d="M16 4C16 4 8 8 8 16s8 12 8 12" stroke="#FFF" stroke-width="2" fill="none"/><path d="M16 4C16 4 24 8 24 16s-8 12-8 12" stroke="#FFF" stroke-width="2" fill="none"/><ellipse cx="16" cy="16" rx="14" ry="7" stroke="#FFF" stroke-width="2" fill="none"/></svg>'
+				},
+			].forEach(ico => {
+				iconArea.appendChild(h("button", {
+					className: "desktop-icon",
+					onDblclick: (e) => {
+						e.stopPropagation();
+						App.openApp(ico.id);
+					},
+					onClick: (e) => e.stopPropagation(),
+				}, h("div", {
+					innerHTML: ico.svg
+				}), h("span", null, ico.label)));
+			});
+			desktopArea.appendChild(iconArea);
+
+			const container = h("div", {
+				style: {
+					width: "100%",
+					height: "100%",
+					display: "flex",
+					flexDirection: "column"
+				}
+			});
+			container.appendChild(desktopArea);
+			container.appendChild(Taskbar.create());
+			app.appendChild(container);
+
+			App.desktopArea = desktopArea;
+		}
+
+
+		// ============================================================
+		// 9. WINDOW BUILDERS
+		//    Each returns { shell, pos, title }
+		//    Content updates happen INSIDE persistent containers.
+		// ============================================================
+
+		// --- My Computer ---
+		function createMyComputerWindow(id) {
+			const pos = App.nextPos();
+			const shell = createWindowShell(id, "My Computer", {
+				width: "520",
+				minW: 400,
+				minH: 300
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				...["File", "Edit", "View", "Help"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))
+			));
+
+			const inner = h("div", {
+				style: {
+					display: "grid",
+					gridTemplateColumns: "repeat(4,1fr)",
+					gap: "8px"
+				}
+			});
+			const drives = [{
+					key: "C:",
+					label: "Local Disk (C:)",
+					svg: '<svg width="40" height="40" viewBox="0 0 48 48"><rect x="8" y="12" width="32" height="24" fill="#C0C0C0" stroke="#000" stroke-width="2"/><rect x="12" y="16" width="24" height="14" fill="#000"/></svg>'
+				},
+				{
+					key: "D:",
+					label: "Data (D:)",
+					svg: '<svg width="40" height="40" viewBox="0 0 48 48"><rect x="8" y="12" width="32" height="24" fill="#C0C0C0" stroke="#000" stroke-width="2"/><rect x="12" y="16" width="24" height="14" fill="#000"/></svg>'
+				},
+				{
+					key: "A:",
+					label: "3.5 Floppy (A:)",
+					svg: '<svg width="40" height="40" viewBox="0 0 48 48"><rect x="10" y="6" width="28" height="36" rx="2" fill="#333" stroke="#000" stroke-width="2"/><rect x="14" y="8" width="20" height="12" fill="#808080"/><rect x="16" y="26" width="16" height="12" rx="1" fill="#C0C0C0"/></svg>'
+				},
+				{
+					key: "E:",
+					label: "CD-ROM (E:)",
+					svg: '<svg width="40" height="40" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="#C0C0C0" stroke="#000" stroke-width="2"/><circle cx="24" cy="24" r="6" fill="#fff" stroke="#000"/><circle cx="24" cy="24" r="2" fill="#000"/></svg>'
+				},
+			];
+			for (const d of drives) {
+				const item = h("div", {
+					style: {
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: "4px",
+						padding: "8px 4px",
+						cursor: "default",
+						userSelect: "none"
+					},
+					onClick: (e) => {
+						e.stopPropagation();
+						inner.querySelectorAll("div[data-drive]").forEach(x => {
+							x.style.background = "transparent";
+							x.style.color = "black";
+						});
+						item.style.background = "#000080";
+						item.style.color = "white";
+					},
+					onDblclick: () => {
+						if (d.key === "C:" || d.key === "D:") App.openExplorer(d.key, []);
+					},
+					onContextmenu: (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						ContextMenu.show(e.clientX, e.clientY, [{
+							label: "Open",
+							bold: true,
+							action: () => {
+								if (d.key === "C:" || d.key === "D:") App.openExplorer(d.key, []);
+							}
+						}, "sep", {
+							label: "Properties"
+						}]);
+					},
+					"data-drive": d.key,
+				}, h("div", {
+					innerHTML: d.svg
+				}), h("span", {
+					style: {
+						fontSize: "10px",
+						textAlign: "center"
+					}
+				}, d.label));
+				inner.appendChild(item);
+			}
+			shell.bodyEl.appendChild(h("div", {
+				className: "sunken-panel",
+				style: {
+					margin: "4px",
+					padding: "12px",
+					flex: "1",
+					overflow: "auto"
+				}
+			}, inner));
+			shell.bodyEl.appendChild(h("div", {
+				className: "status-bar",
+				style: {
+					margin: "0 4px 4px"
+				}
+			}, h("p", {
+				className: "status-bar-field",
+				style: {
+					fontSize: "11px"
+				}
+			}, drives.length + " object(s)")));
+
+			return {
+				shell,
+				pos,
+				title: "My Computer"
+			};
+		}
+
+		// --- Explorer ---
+		// The window shell persists. Only sidebar/filePane contents are rebuilt on navigation.
+		function createExplorerWindow(id, initDrive, initPath) {
+			const pos = App.nextPos();
+			const nav = {
+				drive: initDrive,
+				path: [...initPath],
+				selected: null,
+				history: [{
+					drive: initDrive,
+					path: [...initPath]
+				}],
+				histIdx: 0
+			};
+			const pathStr = () => nav.drive + "\\" + nav.path.join("\\");
+
+			const shell = createWindowShell(id, pathStr() + " - Explorer", {
+				width: "640",
+				minW: 420,
+				minH: 380
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			function navigateTo(drive, path) {
+				nav.drive = drive;
+				nav.path = [...path];
+				nav.selected = null;
+				nav.history = nav.history.slice(0, nav.histIdx + 1);
+				nav.history.push({
+					drive,
+					path: [...path]
+				});
+				nav.histIdx = nav.history.length - 1;
+				refresh();
+			}
+
+			function goBack() {
+				if (nav.histIdx > 0) {
+					nav.histIdx--;
+					const h2 = nav.history[nav.histIdx];
+					nav.drive = h2.drive;
+					nav.path = [...h2.path];
+					nav.selected = null;
+					refresh();
+				}
+			}
+
+			function goFwd() {
+				if (nav.histIdx < nav.history.length - 1) {
+					nav.histIdx++;
+					const h2 = nav.history[nav.histIdx];
+					nav.drive = h2.drive;
+					nav.path = [...h2.path];
+					nav.selected = null;
+					refresh();
+				}
+			}
+
+			function goUp() {
+				if (nav.path.length > 0) navigateTo(nav.drive, nav.path.slice(0, -1));
+			}
+
+			function dblClick(entry) {
+				if (entry.type === "folder") navigateTo(nav.drive, [...nav.path, entry.name]);
+				else if (FileSystem.canOpen(entry.name) && entry.content) App.openNotepad(entry.name, entry.content);
+			}
+
+			// -- Static parts (created once) --
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				...["File", "Edit", "View", "Tools", "Help"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))));
+
+			const backBtn = h("button", {
+				className: "toolbar-btn",
+				onClick: goBack
+			}, "\u25C0 Back");
+			const fwdBtn = h("button", {
+				className: "toolbar-btn",
+				onClick: goFwd
+			}, "Fwd \u25B6");
+			const upBtn = h("button", {
+				className: "toolbar-btn",
+				onClick: goUp
+			}, "\u2B06 Up");
+			shell.bodyEl.appendChild(h("div", {
+				style: {
+					display: "flex",
+					gap: "2px",
+					padding: "4px",
+					borderBottom: "1px solid #808080"
+				}
+			}, backBtn, fwdBtn, upBtn));
+
+			const addrInput = h("input", {
+				type: "text",
+				readOnly: true,
+				style: {
+					flex: "1",
+					fontSize: "11px"
+				}
+			});
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						alignItems: "center",
+						gap: "4px",
+						padding: "4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				h("label", {
+					style: {
+						fontSize: "11px",
+						whiteSpace: "nowrap"
+					}
+				}, "Address:"), addrInput));
+
+			// -- Dynamic parts (containers persist, content rebuilds) --
+			const sidebar = h("div", {
+				className: "sunken-panel",
+				style: {
+					width: "180px",
+					overflowY: "auto",
+					margin: "4px",
+					padding: "4px",
+					fontSize: "11px"
+				}
+			});
+			const filePane = h("div", {
+				className: "sunken-panel",
+				style: {
+					flex: "1",
+					overflowY: "auto",
+					margin: "4px 4px 4px 0",
+					padding: "4px"
+				},
+				onClick: () => {
+					nav.selected = null;
+					refreshFiles();
+				},
+				onContextmenu: (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					ContextMenu.show(e.clientX, e.clientY, [{
+						label: "Refresh",
+						action: refresh
+					}, "sep", {
+						label: "New Note",
+						bold: true,
+						action: () => App.newNote()
+					}, "sep", {
+						label: "Properties"
+					}]);
+				},
+			});
+			shell.bodyEl.appendChild(h("div", {
+				style: {
+					display: "flex",
+					flex: "1",
+					overflow: "hidden"
+				}
+			}, sidebar, filePane));
+
+			const statusText = h("p", {
+				className: "status-bar-field",
+				style: {
+					fontSize: "11px"
+				}
+			});
+			shell.bodyEl.appendChild(h("div", {
+				className: "status-bar",
+				style: {
+					margin: "0 4px 4px"
+				}
+			}, statusText));
+
+			// -- Refresh functions --
+			function refresh() {
+				shell.setTitle(pathStr() + " - Explorer");
+				addrInput.value = pathStr();
+				backBtn.disabled = nav.histIdx <= 0;
+				fwdBtn.disabled = nav.histIdx >= nav.history.length - 1;
+				upBtn.disabled = nav.path.length === 0;
+				refreshSidebar();
+				refreshFiles();
+			}
+
+			function refreshSidebar() {
+				sidebar.innerHTML = "";
+				const tree = h("ul", {
+					className: "tree-view",
+					style: {
+						margin: "0"
+					}
+				});
+				for (const dk of Object.keys(FileSystem.drives)) {
+					const li = h("li");
+					const det = h("details");
+					if (nav.drive === dk) det.open = true;
+					det.appendChild(h("summary", {
+						style: {
+							cursor: "pointer",
+							fontWeight: (nav.drive === dk && nav.path.length === 0) ? "bold" : "normal"
+						},
+						onClick: (e) => {
+							e.preventDefault();
+							navigateTo(dk, []);
+						},
+					}, dk + "\\"));
+					det.appendChild(buildTree(FileSystem.drives[dk], [], dk));
+					li.appendChild(det);
+					tree.appendChild(li);
+				}
+				sidebar.appendChild(tree);
+			}
+
+			function buildTree(items, parentPath, drv) {
+				const ul = h("ul");
+				for (const entry of items.filter(e => e.type === "folder")) {
+					const ep = [...parentPath, entry.name];
+					const isInPath = nav.drive === drv && nav.path.length >= ep.length && ep.every((p, i) => nav.path[i] ===
+						p);
+					const isActive = nav.drive === drv && JSON.stringify(nav.path) === JSON.stringify(ep);
+					const hasSubs = entry.children && entry.children.some(c => c.type === "folder");
+					const li = h("li");
+					if (hasSubs) {
+						const det = h("details");
+						if (isInPath) det.open = true;
+						det.appendChild(h("summary", {
+							style: {
+								cursor: "pointer",
+								fontWeight: isActive ? "bold" : "normal"
+							},
+							onClick: (e) => {
+								e.preventDefault();
+								navigateTo(drv, ep);
+							}
+						}, entry.name));
+						det.appendChild(buildTree(entry.children, ep, drv));
+						li.appendChild(det);
+					} else {
+						li.appendChild(h("span", {
+							style: {
+								cursor: "pointer",
+								fontWeight: isActive ? "bold" : "normal"
+							},
+							onClick: () => navigateTo(drv, ep)
+						}, entry.name));
+					}
+					ul.appendChild(li);
+				}
+				return ul;
+			}
+
+			function refreshFiles() {
+				filePane.innerHTML = "";
+				const entries = FileSystem.resolve(nav.drive, nav.path);
+				const sorted = [...entries.filter(e => e.type === "folder"), ...entries.filter(e => e.type === "file")];
+				if (sorted.length === 0) {
+					filePane.appendChild(h("div", {
+						style: {
+							color: "#808080",
+							textAlign: "center",
+							marginTop: "40px",
+							fontSize: "11px"
+						}
+					}, "This folder is empty."));
+				} else {
+					const grid = h("div", {
+						style: {
+							display: "grid",
+							gridTemplateColumns: "repeat(4,1fr)",
+							gap: "4px"
+						}
+					});
+					for (const entry of sorted) {
+						const item = h("div", {
+								className: "file-item" + (nav.selected === entry.name ? " selected" : ""),
+								onClick: (e) => {
+									e.stopPropagation();
+									nav.selected = entry.name;
+									refreshFiles();
+								},
+								onDblclick: () => dblClick(entry),
+								onContextmenu: (e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									nav.selected = entry.name;
+									const items = [];
+									if (entry.type === "folder") items.push({
+										label: "Open",
+										bold: true,
+										action: () => dblClick(entry)
+									});
+									else if (FileSystem.canOpen(entry.name)) items.push({
+										label: "Open",
+										bold: true,
+										action: () => dblClick(entry)
+									});
+									items.push("sep", {
+										label: "Cut",
+										disabled: true
+									}, {
+										label: "Copy",
+										disabled: true
+									}, "sep", {
+										label: "Delete",
+										disabled: true
+									}, {
+										label: "Rename",
+										disabled: true
+									}, "sep", {
+										label: "Properties"
+									});
+									ContextMenu.show(e.clientX, e.clientY, items);
+								},
+							},
+							h("span", {
+								style: {
+									fontSize: "28px",
+									lineHeight: "1"
+								}
+							}, FileSystem.icon(entry)),
+							h("span", {
+								style: {
+									fontSize: "10px",
+									textAlign: "center",
+									wordBreak: "break-word",
+									lineHeight: "1.2",
+									maxWidth: "80px"
+								}
+							}, entry.name),
+						);
+						grid.appendChild(item);
+					}
+					filePane.appendChild(grid);
+				}
+				statusText.textContent = sorted.length + " object(s)" + (nav.selected ? ' | "' + nav.selected + '" selected' :
+					"");
+			}
+
+			refresh();
+			return {
+				shell,
+				pos,
+				title: nav.drive + "\\"
+			};
+		}
+
+		// --- Browser ---
+		// Each tab owns a persistent iframe. If the site blocks embedding,
+		// a timeout detects the failure and shows a classic IE error page.
+		function createBrowserWindow(id) {
+			const pos = App.nextPos();
+			// Tab state: "home" | "loading" | "loaded" | "error"
+			const tabs = [{
+				title: "Home",
+				url: "",
+				iframe: null,
+				errorEl: null,
+				state: "home"
+			}];
+			let activeTab = 0;
+
+			const shell = createWindowShell(id, "Internet Explorer", {
+				width: "700",
+				minW: 420,
+				minH: 380
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			function normalizeUrl(raw) {
+				let url = raw.trim();
+				if (!url) return "";
+				if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+				return url;
+			}
+
+			// --- Navigate: load URL inside iframe ---
+			function navigate(rawUrl) {
+				const url = normalizeUrl(rawUrl);
+				if (!url) return;
+				const tab = tabs[activeTab];
+				tab.url = url;
+				tab.state = "loading";
+				tab.title = url.replace(/^https?:\/\//, "").split("/")[0];
+				addrInput.value = url;
+				statusText.textContent = "Connecting to " + tab.title + "...";
+
+				// Create iframe for this tab if it doesn't exist yet
+				if (!tab.iframe) {
+					tab.iframe = h("iframe", {
+						style: {
+							width: "100%",
+							height: "100%",
+							border: "none",
+							display: "none"
+						},
+						sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+					});
+					contentArea.appendChild(tab.iframe);
+				}
+				// Create error container if needed
+				if (!tab.errorEl) {
+					tab.errorEl = h("div", {
+						style: {
+							display: "none",
+							width: "100%",
+							height: "100%",
+							overflow: "auto",
+							background: "#fff"
+						}
+					});
+					contentArea.appendChild(tab.errorEl);
+				}
+
+				// Reset visibility
+				tab.iframe.style.display = "none";
+				tab.errorEl.style.display = "none";
+
+				// Load detection
+				let settled = false;
+
+				function onLoad() {
+					if (settled) return;
+					settled = true;
+					try {
+						// Cross-origin: we can't read, but onload fired = something loaded
+						const doc = tab.iframe.contentDocument;
+						if (doc && doc.body && doc.body.innerHTML.length > 0) {
+							tab.state = "loaded";
+							try {
+								if (doc.title) tab.title = doc.title;
+							} catch (e) {}
+						} else {
+							tab.state = "loaded"; // empty but loaded
+						}
+					} catch (e) {
+						// Cross-origin = content is there, browser just won't let us read it
+						tab.state = "loaded";
+					}
+					statusText.textContent = "Done";
+					showActiveContent();
+					refreshTabs();
+				}
+
+				function onError() {
+					if (settled) return;
+					settled = true;
+					showErrorForTab(tab);
+					showActiveContent();
+					refreshTabs();
+				}
+
+				tab.iframe.onload = onLoad;
+				tab.iframe.onerror = onError;
+				tab.iframe.src = url;
+
+				// Timeout: if nothing happens in 8 seconds, assume blocked
+				setTimeout(() => {
+					if (!settled && tab.state === "loading") {
+						settled = true;
+						showErrorForTab(tab);
+						showActiveContent();
+						refreshTabs();
+					}
+				}, 8000);
+
+				showActiveContent();
+				refreshTabs();
+			}
+
+			// --- Show retro error ---
+			function showErrorForTab(tab) {
+				tab.state = "error";
+				statusText.textContent = "Done";
+				const domain = tab.url.replace(/^https?:\/\//, "").split("/")[0];
+				tab.errorEl.innerHTML = "";
+				tab.errorEl.appendChild(buildErrorPage(domain, tab.url));
+			}
+
+			function buildErrorPage(domain, url) {
+				const page = h("div", {
+					style: {
+						padding: "24px",
+						fontFamily: "Arial, sans-serif"
+					}
+				});
+				page.innerHTML =
+					'<div style="max-width:500px;margin:0 auto">' +
+					'<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #000080">' +
+					'<div style="font-size:48px;line-height:1">&#9888;</div>' +
+					'<div>' +
+					'<h2 style="color:#000080;font-size:15px;margin-bottom:4px">The page cannot be displayed</h2>' +
+					'<p style="font-size:12px;color:#333;word-break:break-all">' + url + '</p>' +
+					'</div>' +
+					'</div>' +
+					'<div style="background:#ffffcc;border:1px solid #ccc;padding:12px;margin-bottom:16px">' +
+					'<p style="font-size:12px;margin-bottom:8px"><b>Internet Explorer cannot open the Internet site</b></p>' +
+					'<p style="font-size:11px;color:#333;line-height:1.6">' +
+					'The page you are looking for is currently unavailable. The Web site ' +
+					'might be experiencing technical difficulties, or you may need to ' +
+					'adjust your browser settings.' +
+					'</p>' +
+					'</div>' +
+					'<div style="font-size:11px;color:#333;line-height:1.8">' +
+					'<p style="margin-bottom:8px">Please try the following:</p>' +
+					'<ul style="padding-left:24px;margin-bottom:16px">' +
+					'<li>Click the <b>Refresh</b> button, or try again later.</li>' +
+					'<li>Check that the address <b>' + domain + '</b> is spelled correctly.</li>' +
+					'<li>The server may be refusing embedded connections for security reasons.</li>' +
+					'<li>To open this page directly, copy the address and paste it in a new browser window.</li>' +
+					'</ul>' +
+					'<div style="text-align:center;margin-top:12px">' +
+					'<button id="err-retry-btn" style="padding:4px 16px;font-size:12px">Retry</button>' +
+					'</div>' +
+					'<p style="color:#808080;font-size:10px;border-top:1px solid #ccc;padding-top:8px;margin-top:16px">' +
+					'Internet Explorer 5.0 &#8212; Cannot find server or DNS Error' +
+					'</p>' +
+					'</div>' +
+					'</div>';
+				const retryBtn = page.querySelector("#err-retry-btn");
+				if (retryBtn) retryBtn.addEventListener("click", () => navigate(url));
+				return page;
+			}
+
+			// --- Right-click ---
+			shell.bodyEl.addEventListener("contextmenu", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				ContextMenu.show(e.clientX, e.clientY, [{
+						label: "New Tab",
+						bold: true,
+						action: addTab
+					},
+					{
+						label: "Close Tab",
+						action: () => closeTab(activeTab)
+					},
+					"sep",
+					{
+						label: "Back",
+						action: () => {
+							try {
+								tabs[activeTab].iframe?.contentWindow.history.back();
+							} catch (e2) {}
+						}
+					},
+					{
+						label: "Forward",
+						action: () => {
+							try {
+								tabs[activeTab].iframe?.contentWindow.history.forward();
+							} catch (e2) {}
+						}
+					},
+					{
+						label: "Refresh",
+						action: () => {
+							const t = tabs[activeTab];
+							if (t.url) navigate(t.url);
+						}
+					},
+					"sep",
+					{
+						label: "Add to Favorites",
+						disabled: true
+					},
+					"sep", {
+						label: "Properties"
+					},
+				]);
+			});
+
+			// --- Menu bar ---
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				...["File", "Edit", "View", "Favorites", "Tools", "Help"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))));
+
+			// --- Toolbar ---
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => {
+						try {
+							tabs[activeTab].iframe?.contentWindow.history.back();
+						} catch (e) {}
+					}
+				}, "\u25C0 Back"),
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => {
+						try {
+							tabs[activeTab].iframe?.contentWindow.history.forward();
+						} catch (e) {}
+					}
+				}, "Fwd \u25B6"),
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => {
+						const t = tabs[activeTab];
+						if (t.url) navigate(t.url);
+					}
+				}, "\u21BB Refresh"),
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => {
+						try {
+							tabs[activeTab].iframe?.contentWindow.stop();
+						} catch (e) {}
+					}
+				}, "\u2716 Stop"),
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => {
+						const t = tabs[activeTab];
+						t.state = "home";
+						t.url = "";
+						t.title = "Home";
+						addrInput.value = "";
+						statusText.textContent = "Done";
+						showActiveContent();
+						refreshTabs();
+					}
+				}, "\u2302 Home"),
+			));
+
+			// --- Address bar (Enter or Go to navigate) ---
+			const addrInput = h("input", {
+				type: "text",
+				value: "",
+				style: {
+					flex: "1",
+					fontSize: "11px"
+				},
+				onKeydown: (e) => {
+					if (e.key === "Enter") navigate(addrInput.value);
+				},
+			});
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						alignItems: "center",
+						gap: "4px",
+						padding: "4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				h("label", {
+					style: {
+						fontSize: "11px",
+						whiteSpace: "nowrap"
+					}
+				}, "Address:"),
+				addrInput,
+				h("button", {
+					className: "toolbar-btn",
+					onClick: () => navigate(addrInput.value)
+				}, "Go"),
+			));
+
+			// --- Tab bar ---
+			const tabBar = h("div", {
+				style: {
+					display: "flex",
+					gap: "1px",
+					padding: "2px 4px 0",
+					background: "#c0c0c0",
+					borderBottom: "1px solid #808080"
+				}
+			});
+			shell.bodyEl.appendChild(tabBar);
+
+			// --- Content area (holds homepage + per-tab iframes + per-tab error pages) ---
+			const contentArea = h("div", {
+				style: {
+					margin: "4px",
+					flex: "1",
+					border: "2px inset #dfdfdf",
+					background: "white",
+					overflow: "hidden",
+					position: "relative"
+				}
+			});
+			shell.bodyEl.appendChild(contentArea);
+
+			// --- Status bar ---
+			const statusText = h("p", {
+				className: "status-bar-field",
+				style: {
+					fontSize: "11px"
+				}
+			}, "Done");
+			shell.bodyEl.appendChild(h("div", {
+				className: "status-bar",
+				style: {
+					margin: "0 4px 4px"
+				}
+			}, statusText));
+
+			// --- Homepage (persistent, shown/hidden) ---
+			const homePage = h("div", {
+				style: {
+					width: "100%",
+					height: "100%",
+					overflow: "auto",
+					padding: "16px",
+					display: "none"
+				}
+			});
+			homePage.innerHTML = '<div style="text-align:center">' +
+				'<svg width="64" height="64" viewBox="0 0 64 64" style="margin:0 auto 16px;display:block"><circle cx="32" cy="32" r="30" fill="#00F" stroke="#000" stroke-width="2"/><path d="M32 4C32 4 12 12 12 32s20 28 20 28" stroke="#FFF" stroke-width="3" fill="none"/><path d="M32 4C32 4 52 12 52 32s-20 28-20 28" stroke="#FFF" stroke-width="3" fill="none"/><ellipse cx="32" cy="32" rx="30" ry="12" stroke="#FFF" stroke-width="3" fill="none"/><text x="32" y="38" font-size="16" fill="#FFF" text-anchor="middle" font-weight="bold">e</text></svg>' +
+				'<h2 style="color:#000080;margin-bottom:8px;font-size:18px">Welcome to Internet Explorer</h2>' +
+				'<p style="color:#555;font-size:12px">Type any URL in the address bar and press Enter.</p>' +
+				'<div style="margin-top:24px;text-align:left;max-width:300px;margin-left:auto;margin-right:auto">' +
+				'<h3 style="font-weight:bold;margin-bottom:8px;font-size:12px">Try these sites:</h3>' +
+				'<ul id="home-links-' + id +
+				'" style="list-style-type:disc;padding-left:20px;font-size:12px;line-height:2.2"></ul>' +
+				'<p style="color:#999;font-size:10px;margin-top:12px">Some sites may refuse iframe connections.</p>' +
+				'</div></div>';
+			contentArea.appendChild(homePage);
+
+			const homeUl = homePage.querySelector("#home-links-" + id);
+			[
+				["Wikipedia", "https://www.wikipedia.org"],
+				["Example.com", "https://example.com"],
+				["DuckDuckGo", "https://duckduckgo.com"],
+				["Archive.org", "https://archive.org"],
+			].forEach(([label, url]) => {
+				const li = h("li");
+				const a = h("a", {
+					href: "#",
+					style: {
+						color: "#0000EE",
+						textDecoration: "underline"
+					}
+				}, label + " \u2014 " + url.replace("https://", ""));
+				a.addEventListener("click", (e) => {
+					e.preventDefault();
+					addrInput.value = url;
+					navigate(url);
+				});
+				li.appendChild(a);
+				homeUl.appendChild(li);
+			});
+
+			// --- Show/hide content for active tab ---
+			function showActiveContent() {
+				// Hide everything
+				homePage.style.display = "none";
+				for (const t of tabs) {
+					if (t.iframe) t.iframe.style.display = "none";
+					if (t.errorEl) t.errorEl.style.display = "none";
+				}
+				const tab = tabs[activeTab];
+				addrInput.value = tab.url;
+				if (tab.state === "home") {
+					homePage.style.display = "";
+				} else if (tab.state === "loaded" || tab.state === "loading") {
+					if (tab.iframe) {
+						tab.iframe.style.display = "";
+						tab.iframe.style.width = "100%";
+						tab.iframe.style.height = "100%";
+					}
+				} else if (tab.state === "error") {
+					if (tab.errorEl) tab.errorEl.style.display = "";
+				}
+			}
+
+			// --- Tab management ---
+			function addTab() {
+				tabs.push({
+					title: "New Tab",
+					url: "",
+					iframe: null,
+					errorEl: null,
+					state: "home"
+				});
+				activeTab = tabs.length - 1;
+				showActiveContent();
+				refreshTabs();
+			}
+
+			function closeTab(idx) {
+				if (tabs.length <= 1) {
+					App.closeWindow(id);
+					return;
+				}
+				if (tabs[idx].iframe) tabs[idx].iframe.remove();
+				if (tabs[idx].errorEl) tabs[idx].errorEl.remove();
+				tabs.splice(idx, 1);
+				if (activeTab >= tabs.length) activeTab = tabs.length - 1;
+				showActiveContent();
+				refreshTabs();
+			}
+
+			// --- Rebuild tab strip only ---
+			function refreshTabs() {
+				tabBar.innerHTML = "";
+				for (let i = 0; i < tabs.length; i++) {
+					const idx = i;
+					tabBar.appendChild(h("div", {
+							style: {
+								padding: "3px 8px",
+								fontSize: "11px",
+								cursor: "pointer",
+								background: i === activeTab ? "#fff" : "#c0c0c0",
+								border: i === activeTab ? "1px solid #808080" : "1px solid #a0a0a0",
+								borderBottom: i === activeTab ? "1px solid #fff" : "1px solid #808080",
+								marginBottom: i === activeTab ? "-1px" : "0",
+								display: "flex",
+								alignItems: "center",
+								gap: "6px",
+								maxWidth: "160px"
+							},
+							onClick: () => {
+								activeTab = idx;
+								showActiveContent();
+								refreshTabs();
+							},
+						},
+						h("span", {
+							style: {
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								whiteSpace: "nowrap"
+							}
+						}, tabs[i].title),
+						h("span", {
+							style: {
+								cursor: "pointer",
+								fontSize: "9px",
+								padding: "0 2px"
+							},
+							onClick: (e) => {
+								e.stopPropagation();
+								closeTab(idx);
+							}
+						}, "\u2716"),
+					));
+				}
+				tabBar.appendChild(h("div", {
+					style: {
+						padding: "3px 8px",
+						fontSize: "11px",
+						cursor: "pointer",
+						color: "#555"
+					},
+					onClick: addTab
+				}, "+"));
+			}
+
+			showActiveContent();
+			refreshTabs();
+			return {
+				shell,
+				pos,
+				title: "Internet Explorer"
+			};
+		}
+		// --- Notepad ---
+		function createNotepadWindow(id, fileName, content) {
+			const pos = App.nextPos();
+			const shell = createWindowShell(id, fileName + " - Notepad", {
+				width: "480",
+				minW: 280,
+				minH: 220
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			const statusField = h("p", {
+				className: "status-bar-field",
+				style: {
+					fontSize: "11px"
+				}
+			}, content.split("\n").length + " line(s)");
+			const textarea = h("textarea", {
+				style: {
+					width: "100%",
+					flex: "1",
+					resize: "none",
+					fontFamily: "monospace",
+					fontSize: "12px",
+					lineHeight: "1.4",
+					padding: "4px",
+					border: "none",
+					outline: "none",
+					boxSizing: "border-box"
+				},
+				onKeydown: (e) => {
+					if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+						e.preventDefault();
+						doSave();
+					}
+				},
+			});
+			textarea.value = content;
+
+			function doSave() {
+				FileSystem.saveFile("C:", ["Documents"], fileName, textarea.value);
+				statusField.textContent = "\u2714 Saved to C:\\Documents\\" + fileName;
+				setTimeout(() => {
+					statusField.textContent = textarea.value.split("\n").length + " line(s)";
+				}, 2000);
+			}
+
+			const fileMenuBtn = h("button", {
+				className: "menu-btn",
+				onClick: (e) => {
+					e.stopPropagation();
+					const r = fileMenuBtn.getBoundingClientRect();
+					ContextMenu.show(r.left, r.bottom, [{
+							label: "New",
+							action: () => App.newNote()
+						},
+						{
+							label: "Save",
+							bold: true,
+							action: doSave
+						},
+						"sep", {
+							label: "Exit",
+							action: () => App.closeWindow(id)
+						},
+					]);
+				}
+			}, "File");
+
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				fileMenuBtn, ...["Edit", "Search", "Help"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))));
+			shell.bodyEl.appendChild(textarea);
+			shell.bodyEl.appendChild(h("div", {
+					className: "status-bar",
+					style: {
+						margin: "0"
+					}
+				},
+				h("p", {
+					className: "status-bar-field",
+					style: {
+						fontSize: "11px"
+					}
+				}, "Ln 1, Col 1"), statusField));
+
+			return {
+				shell,
+				pos,
+				title: fileName
+			};
+		}
+
+
+		// --- Help ---
+		function createHelpWindow(id) {
+			const pos = App.nextPos();
+			const shell = createWindowShell(id, "Help - Windows 98", {
+				width: "500",
+				minW: 320,
+				minH: 280
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				...["Help Topics", "Options"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))));
+
+			const content = h("div", {
+				style: {
+					flex: "1",
+					overflow: "auto",
+					padding: "16px",
+					fontSize: "12px",
+					lineHeight: "1.6"
+				}
+			});
+			content.innerHTML =
+				'<div style="text-align:center;margin-bottom:16px">' +
+				'<div style="font-size:48px;margin-bottom:8px">\uD83D\uDCBB</div>' +
+				'<h2 style="color:#000080;font-size:16px;margin-bottom:4px">Microsoft Windows 98</h2>' +
+				'<p style="color:#555;font-size:11px">Second Edition, Build 4.10.2222</p>' +
+				'<p style="color:#999;font-size:10px">Copyright \u00A9 Microsoft Corp. 1981-1998</p>' +
+				'</div>' +
+				'<div style="border:1px solid #ccc;padding:12px;background:#fffff0">' +
+				'<h3 style="font-size:13px;margin-bottom:8px;color:#000080">Getting Started</h3>' +
+				'<ul style="padding-left:20px;margin-bottom:12px;font-size:11px">' +
+				'<li style="margin-bottom:4px"><b>My Computer</b> \u2014 View and manage your disk drives.</li>' +
+				'<li style="margin-bottom:4px"><b>Windows Explorer</b> \u2014 Browse the file system tree.</li>' +
+				'<li style="margin-bottom:4px"><b>Internet Explorer</b> \u2014 Browse the World Wide Web.</li>' +
+				'<li style="margin-bottom:4px"><b>Notepad</b> \u2014 Create and edit text files. Ctrl+S to save.</li>' +
+				'<li style="margin-bottom:4px"><b>Find</b> \u2014 Search for files by name.</li>' +
+				'<li style="margin-bottom:4px"><b>Run</b> \u2014 Open a file path directly.</li>' +
+				'</ul>' +
+				'<h3 style="font-size:13px;margin-bottom:8px;color:#000080">Tips</h3>' +
+				'<ul style="padding-left:20px;font-size:11px">' +
+				'<li style="margin-bottom:4px">Right-click the desktop to create a new note.</li>' +
+				'<li style="margin-bottom:4px">Drag window edges to resize. Double-click title bar to maximize.</li>' +
+				'<li style="margin-bottom:4px">Some websites block iframe embedding in the browser.</li>' +
+				'</ul>' +
+				'</div>';
+			shell.bodyEl.appendChild(content);
+			shell.bodyEl.appendChild(h("div", {
+					className: "status-bar",
+					style: {
+						margin: "0 4px 4px"
+					}
+				},
+				h("p", {
+					className: "status-bar-field",
+					style: {
+						fontSize: "11px"
+					}
+				}, "Windows Help")));
+
+			return {
+				shell,
+				pos,
+				title: "Help"
+			};
+		}
+
+
+		// --- Control Panel ---
+		function createControlPanelWindow(id) {
+			const pos = App.nextPos();
+			const shell = createWindowShell(id, "Control Panel", {
+				width: "480",
+				minW: 360,
+				minH: 280
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						display: "flex",
+						gap: "2px",
+						padding: "2px 4px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				...["File", "Edit", "View", "Help"].map(m => h("button", {
+					className: "menu-btn"
+				}, m))));
+
+			const items = [{
+					icon: "\u{1F5A5}\uFE0F",
+					label: "Display",
+					desc: "Change wallpaper, screen saver, and resolution."
+				},
+				{
+					icon: "\u{1F50A}",
+					label: "Sounds",
+					desc: "Assign sounds to system events."
+				},
+				{
+					icon: "\u{1F5A8}\uFE0F",
+					label: "Printers",
+					desc: "Add, remove, and configure printers."
+				},
+				{
+					icon: "\u{1F310}",
+					label: "Network",
+					desc: "Configure network adapters and protocols."
+				},
+				{
+					icon: "\u2328\uFE0F",
+					label: "Keyboard",
+					desc: "Set keyboard repeat rate and language."
+				},
+				{
+					icon: "\u{1F5B1}\uFE0F",
+					label: "Mouse",
+					desc: "Change mouse speed and button settings."
+				},
+				{
+					icon: "\u{1F4C5}",
+					label: "Date/Time",
+					desc: "Set date, time, and time zone."
+				},
+				{
+					icon: "\u{1F464}",
+					label: "Users",
+					desc: "Manage user accounts and passwords."
+				},
+			];
+
+			const grid = h("div", {
+				className: "sunken-panel",
+				style: {
+					margin: "4px",
+					padding: "12px",
+					flex: "1",
+					overflow: "auto"
+				}
+			});
+			const inner = h("div", {
+				style: {
+					display: "grid",
+					gridTemplateColumns: "repeat(4, 1fr)",
+					gap: "8px"
+				}
+			});
+			for (const item of items) {
+				const el = h("div", {
+						style: {
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "center",
+							gap: "4px",
+							padding: "8px 4px",
+							cursor: "default",
+							userSelect: "none",
+							textAlign: "center"
+						},
+						onDblclick: () => {
+							const dlg = App._createDialog(item.label, 300, [
+								h("div", {
+										style: {
+											display: "flex",
+											alignItems: "center",
+											gap: "12px",
+											marginBottom: "12px"
+										}
+									},
+									h("span", {
+										style: {
+											fontSize: "32px"
+										}
+									}, item.icon),
+									h("p", {
+										style: {
+											fontSize: "12px"
+										}
+									}, item.desc),
+								),
+								h("p", {
+									style: {
+										fontSize: "11px",
+										color: "#808080",
+										marginBottom: "12px"
+									}
+								}, "This setting is not available in the simulator."),
+								h("div", {
+										style: {
+											display: "flex",
+											justifyContent: "flex-end"
+										}
+									},
+									h("button", {
+										onClick: () => dlg.remove()
+									}, "OK"),
+								),
+							]);
+						},
+					},
+					h("span", {
+						style: {
+							fontSize: "28px"
+						}
+					}, item.icon),
+					h("span", {
+						style: {
+							fontSize: "10px",
+							lineHeight: "1.2"
+						}
+					}, item.label),
+				);
+				inner.appendChild(el);
+			}
+			grid.appendChild(inner);
+			shell.bodyEl.appendChild(grid);
+			shell.bodyEl.appendChild(h("div", {
+					className: "status-bar",
+					style: {
+						margin: "0 4px 4px"
+					}
+				},
+				h("p", {
+					className: "status-bar-field",
+					style: {
+						fontSize: "11px"
+					}
+				}, items.length + " object(s)")));
+
+			return {
+				shell,
+				pos,
+				title: "Control Panel"
+			};
+		}
+
+
+		// --- Find Files ---
+		function createFindWindow(id) {
+			const pos = App.nextPos();
+			const shell = createWindowShell(id, "Find: All Files", {
+				width: "460",
+				minW: 340,
+				minH: 280
+			}, pos, {
+				onClose: () => App.closeWindow(id),
+				onMinimize: () => App.minimizeWindow(id)
+			});
+
+			const nameInput = h("input", {
+				type: "text",
+				style: {
+					width: "200px",
+					fontSize: "11px"
+				}
+			});
+			const lookInSelect = h("select", {
+					style: {
+						width: "120px",
+						fontSize: "11px"
+					}
+				},
+				h("option", {
+					value: "C:"
+				}, "C:\\"),
+				h("option", {
+					value: "D:"
+				}, "D:\\"),
+			);
+			const resultsArea = h("div", {
+					className: "sunken-panel",
+					style: {
+						margin: "4px",
+						flex: "1",
+						overflow: "auto",
+						padding: "4px",
+						fontSize: "11px"
+					}
+				},
+				h("div", {
+					style: {
+						color: "#808080",
+						textAlign: "center",
+						marginTop: "20px"
+					}
+				}, "Type a filename and click Find Now."),
+			);
+			const statusText = h("p", {
+				className: "status-bar-field",
+				style: {
+					fontSize: "11px"
+				}
+			}, "Ready");
+
+			function doSearch() {
+				const query = nameInput.value.trim().toLowerCase();
+				if (!query) return;
+				statusText.textContent = "Searching...";
+				const results = [];
+				const drive = lookInSelect.value;
+
+				function searchIn(entries, path) {
+					for (const e of entries) {
+						if (e.name.toLowerCase().includes(query)) results.push({
+							name: e.name,
+							path: drive + "\\" + path.join("\\"),
+							type: e.type
+						});
+						if (e.type === "folder" && e.children) searchIn(e.children, [...path, e.name]);
+					}
+				}
+				searchIn(FileSystem.drives[drive] || [], []);
+				resultsArea.innerHTML = "";
+				if (results.length === 0) {
+					resultsArea.appendChild(h("div", {
+						style: {
+							color: "#808080",
+							textAlign: "center",
+							marginTop: "20px"
+						}
+					}, 'No files found matching "' + nameInput.value + '".'));
+				} else {
+					resultsArea.appendChild(h("div", {
+							style: {
+								display: "flex",
+								gap: "8px",
+								padding: "2px 4px",
+								borderBottom: "1px solid #808080",
+								fontWeight: "bold",
+								fontSize: "10px"
+							}
+						},
+						h("span", {
+							style: {
+								width: "140px"
+							}
+						}, "Name"), h("span", {
+							style: {
+								width: "50px"
+							}
+						}, "Type"), h("span", {
+							style: {
+								flex: "1"
+							}
+						}, "In Folder")));
+					for (const r of results) {
+						resultsArea.appendChild(h("div", {
+								style: {
+									display: "flex",
+									gap: "8px",
+									padding: "2px 4px",
+									fontSize: "10px",
+									cursor: "default"
+								}
+							},
+							h("span", {
+								style: {
+									width: "140px",
+									overflow: "hidden",
+									textOverflow: "ellipsis"
+								}
+							}, FileSystem.icon({
+								type: r.type,
+								name: r.name
+							}) + " " + r.name),
+							h("span", {
+								style: {
+									width: "50px",
+									color: "#808080"
+								}
+							}, r.type === "folder" ? "Folder" : "File"),
+							h("span", {
+								style: {
+									flex: "1",
+									color: "#808080"
+								}
+							}, r.path)));
+					}
+				}
+				statusText.textContent = results.length + " file(s) found";
+			}
+
+			nameInput.addEventListener("keydown", (e) => {
+				if (e.key === "Enter") doSearch();
+			});
+
+			shell.bodyEl.appendChild(h("div", {
+					style: {
+						padding: "8px",
+						fontSize: "11px",
+						borderBottom: "1px solid #808080"
+					}
+				},
+				h("div", {
+						style: {
+							display: "flex",
+							alignItems: "center",
+							gap: "8px",
+							marginBottom: "6px"
+						}
+					},
+					h("label", {
+						style: {
+							display: "inline-block",
+							width: "55px"
+						}
+					}, "Named:"), nameInput),
+				h("div", {
+						style: {
+							display: "flex",
+							alignItems: "center",
+							gap: "8px",
+							marginBottom: "8px"
+						}
+					},
+					h("label", {
+						style: {
+							display: "inline-block",
+							width: "55px"
+						}
+					}, "Look in:"), lookInSelect),
+				h("div", {
+						style: {
+							display: "flex",
+							gap: "6px"
+						}
+					},
+					h("button", {
+						onClick: doSearch,
+						style: {
+							padding: "2px 16px",
+							fontSize: "11px"
+						}
+					}, "Find Now"),
+					h("button", {
+						onClick: () => {
+							nameInput.value = "";
+							resultsArea.innerHTML =
+								'<div style="color:#808080;text-align:center;margin-top:20px">Type a filename and click Find Now.</div>';
+							statusText.textContent = "Ready";
+						},
+						style: {
+							padding: "2px 16px",
+							fontSize: "11px"
+						}
+					}, "New Search")),
+			));
+			shell.bodyEl.appendChild(resultsArea);
+			shell.bodyEl.appendChild(h("div", {
+				className: "status-bar",
+				style: {
+					margin: "0 4px 4px"
+				}
+			}, statusText));
+
+			return {
+				shell,
+				pos,
+				title: "Find Files"
+			};
+		}
+
+
+		// ============================================================
+		// 10. APP — Top-level orchestration
+		// ============================================================
+		const App = {
+			desktopArea: null,
+			noteCounter: 0,
+			username: "",
+
+			state: {
+				openList: [], // ordered window IDs
+				windows: {}, // id -> { shell, pos, title, minimized }
+				activeWin: null,
+				highZ: 10,
+			},
+
+			init() {
+				Interaction.init();
+				showBootScreen(() => {
+					showLoginScreen((name) => {
+						this.username = name;
+						setupDesktop();
+						StartMenu.create();
+					});
+				});
+			},
+
+			nextPos() {
+				const n = this.state.openList.length;
+				this.state.highZ++;
+				return {
+					x: 60 + n * 30,
+					y: 40 + n * 30,
+					z: this.state.highZ
+				};
+			},
+
+			// Open a singleton app
+			openApp(type) {
+				if (this.state.windows[type]) {
+					this.restoreWindow(type);
+					return;
+				}
+				let win;
+				if (type === "my-computer") win = createMyComputerWindow(type);
+				else if (type === "file-system") win = createExplorerWindow(type, "C:", []);
+				else if (type === "browser") win = createBrowserWindow(type);
+				else if (type === "help") win = createHelpWindow(type);
+				else if (type === "control-panel") win = createControlPanelWindow(type);
+				else if (type === "find") win = createFindWindow(type);
+				else return;
+				this._register(type, win);
+			},
+
+			openExplorer(drive, path) {
+				const id = "explorer-" + Date.now();
+				this._register(id, createExplorerWindow(id, drive, path));
+			},
+
+			openNotepad(fileName, content) {
+				const id = "notepad-" + Date.now();
+				this._register(id, createNotepadWindow(id, fileName, content));
+			},
+
+			newNote() {
+				this.noteCounter++;
+				this.openNotepad("Untitled " + this.noteCounter + ".txt", "");
+			},
+
+			// Register a window — append its DOM element, update taskbar
+			_register(id, win) {
+				this.state.openList.push(id);
+				this.state.windows[id] = {
+					shell: win.shell,
+					pos: win.pos,
+					title: win.title,
+					minimized: false
+				};
+				this.state.activeWin = id;
+				this.desktopArea.appendChild(win.shell.el);
+				this._syncActive();
+				Taskbar.updateButtons();
+			},
+
+			closeWindow(id) {
+				const info = this.state.windows[id];
+				if (!info) return;
+				info.shell.destroy();
+				delete this.state.windows[id];
+				this.state.openList = this.state.openList.filter(w => w !== id);
+				if (this.state.activeWin === id) this.state.activeWin = this.state.openList[this.state.openList.length -
+					1] || null;
+				this._syncActive();
+				Taskbar.updateButtons();
+			},
+
+			minimizeWindow(id) {
+				const info = this.state.windows[id];
+				if (!info) return;
+				info.minimized = true;
+				info.shell.hide();
+				if (this.state.activeWin === id) this.state.activeWin = null;
+				this._syncActive();
+				Taskbar.updateButtons();
+			},
+
+			restoreWindow(id) {
+				const info = this.state.windows[id];
+				if (!info) return;
+				info.minimized = false;
+				info.shell.show();
+				this.bringToFront(id);
+			},
+
+			bringToFront(id) {
+				const info = this.state.windows[id];
+				if (!info) return;
+				this.state.highZ++;
+				info.pos.z = this.state.highZ;
+				info.shell.setZ(this.state.highZ);
+				this.state.activeWin = id;
+				this._syncActive();
+				Taskbar.updateButtons();
+			},
+
+			// Update active/inactive title bars on all windows
+			_syncActive() {
+				for (const wid of this.state.openList) {
+					const info = this.state.windows[wid];
+					if (info) info.shell.setActive(wid === this.state.activeWin);
+				}
+			},
+
+			// ===== SYSTEM DIALOGS & TRANSITIONS =====
+
+			// Run dialog — type a path to open a file or folder
+			showRunDialog() {
+				const input = h("input", {
+					type: "text",
+					style: {
+						flex: "1",
+						fontSize: "11px"
+					},
+					placeholder: "C:\\Documents\\letter.txt"
+				});
+				const dialog = this._createDialog("Run", 380, [
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "12px",
+								marginBottom: "12px"
+							}
+						},
+						h("span", {
+							style: {
+								fontSize: "28px"
+							}
+						}, "\u{1F4E6}"),
+						h("p", {
+							style: {
+								fontSize: "12px"
+							}
+						}, "Type the name of a file or folder, and\nWindows will open it for you."),
+					),
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "8px",
+								marginBottom: "16px"
+							}
+						},
+						h("label", {
+							style: {
+								fontSize: "11px",
+								whiteSpace: "nowrap"
+							}
+						}, "Open:"),
+						input,
+					),
+					h("div", {
+							style: {
+								display: "flex",
+								justifyContent: "flex-end",
+								gap: "6px"
+							}
+						},
+						h("button", {
+							onClick: () => {
+								const val = input.value.trim();
+								dialog.remove();
+								if (!val) return;
+								// Try to parse a path like C:\Documents\letter.txt
+								const match = val.match(/^([A-Z]:)\\?(.*)/i);
+								if (match) {
+									const drive = match[1].toUpperCase();
+									const parts = match[2].split("\\").filter(Boolean);
+									const entries = FileSystem.resolve(drive, parts);
+									if (entries && entries.length >= 0) {
+										// Check if it's a file at the end of the path
+										const parentParts = parts.slice(0, -1);
+										const fileName = parts[parts.length - 1];
+										const parentEntries = FileSystem.resolve(drive, parentParts);
+										const file = parentEntries.find(e => e.name === fileName);
+										if (file && file.type === "file" && FileSystem.canOpen(file
+											.name)) {
+											this.openNotepad(file.name, file.content);
+										} else if (file && file.type === "folder") {
+											this.openExplorer(drive, parts);
+										} else {
+											// Open parent folder
+											this.openExplorer(drive, parts.length > 0 ? parts : []);
+										}
+									} else {
+										this.openExplorer(drive, []);
+									}
+								}
+							}
+						}, "OK"),
+						h("button", {
+							onClick: () => dialog.remove()
+						}, "Cancel"),
+						h("button", {
+							onClick: () => {
+								dialog.remove();
+								this.openApp("file-system");
+							}
+						}, "Browse..."),
+					),
+				]);
+				setTimeout(() => input.focus(), 50);
+				input.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						const btn = dialog.querySelector("button");
+						if (btn) btn.click();
+					}
+				});
+			},
+
+			// Log Off confirmation dialog
+			showLogOffDialog() {
+				const dialog = this._createDialog("Log Off Windows", 320, [
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "12px",
+								marginBottom: "16px"
+							}
+						},
+						h("span", {
+							style: {
+								fontSize: "32px"
+							}
+						}, "\u{1F6AA}"),
+						h("p", {
+							style: {
+								fontSize: "12px"
+							}
+						}, "Are you sure you want to log off?"),
+					),
+					h("div", {
+							style: {
+								display: "flex",
+								justifyContent: "flex-end",
+								gap: "6px"
+							}
+						},
+						h("button", {
+							onClick: () => {
+								dialog.remove();
+								this._doLogOff();
+							}
+						}, "Yes"),
+						h("button", {
+							onClick: () => dialog.remove()
+						}, "No"),
+					),
+				]);
+			},
+
+			// Shut Down dialog with radio options (like real Win98)
+			showShutDownDialog() {
+				let choice = "shutdown"; // default selection
+				const radioName = "sd-" + Date.now();
+
+				function makeRadio(value, label, checked) {
+					const id = radioName + "-" + value;
+					const radio = h("input", {
+						type: "radio",
+						name: radioName,
+						id,
+						value
+					});
+					if (checked) radio.checked = true;
+					radio.addEventListener("change", () => {
+						choice = value;
+					});
+					return h("div", {
+							style: {
+								display: "flex",
+								alignItems: "center",
+								gap: "6px",
+								marginBottom: "6px"
+							}
+						},
+						radio,
+						h("label", {
+							for: id,
+							style: {
+								fontSize: "12px",
+								cursor: "pointer"
+							}
+						}, label),
+					);
+				}
+
+				const dialog = this._createDialog("Shut Down Windows", 360, [
+					h("div", {
+							style: {
+								display: "flex",
+								alignItems: "flex-start",
+								gap: "12px",
+								marginBottom: "16px"
+							}
+						},
+						h("div", {
+							innerHTML: '<svg width="48" height="48" viewBox="0 0 48 48"><rect x="8" y="8" width="32" height="32" fill="#008080"/><rect x="12" y="16" width="10" height="10" fill="#000080"/><rect x="26" y="16" width="10" height="10" fill="#F00"/><rect x="12" y="28" width="10" height="10" fill="#FF0"/><rect x="26" y="28" width="10" height="10" fill="#0F0"/></svg>'
+						}),
+						h("div", null,
+							h("p", {
+								style: {
+									fontSize: "12px",
+									marginBottom: "12px"
+								}
+							}, "What do you want the computer to do?"),
+							makeRadio("shutdown", "Shut down", true),
+							makeRadio("restart", "Restart", false),
+							makeRadio("standby", "Stand by", false),
+						),
+					),
+					h("div", {
+							style: {
+								display: "flex",
+								justifyContent: "flex-end",
+								gap: "6px"
+							}
+						},
+						h("button", {
+							onClick: () => {
+								dialog.remove();
+								if (choice === "shutdown") this._doShutDown();
+								else if (choice === "restart") this._doRestart();
+								else if (choice === "standby") this._doStandby();
+							}
+						}, "OK"),
+						h("button", {
+							onClick: () => dialog.remove()
+						}, "Cancel"),
+						h("button", {
+							onClick: () => dialog.remove()
+						}, "Help"),
+					),
+				]);
+			},
+
+			// Create a centered Win98 dialog (modal feel)
+			_createDialog(title, width, children) {
+				const overlay = h("div", {
+					style: {
+						position: "fixed",
+						inset: "0",
+						background: "rgba(0,0,0,0.15)",
+						zIndex: 100002,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center"
+					},
+					onClick: (e) => e.stopPropagation(),
+					onMousedown: (e) => e.stopPropagation(),
+				});
+				const win = h("div", {
+						className: "window",
+						style: {
+							width: width + "px"
+						}
+					},
+					h("div", {
+							className: "title-bar"
+						},
+						h("div", {
+							className: "title-bar-text"
+						}, title),
+						h("div", {
+								className: "title-bar-controls"
+							},
+							h("button", {
+								"aria-label": "Close",
+								onClick: () => overlay.remove()
+							}),
+						),
+					),
+					h("div", {
+						className: "window-body"
+					}, ...children),
+				);
+				overlay.appendChild(win);
+				document.body.appendChild(overlay);
+				return overlay;
+			},
+
+			// --- Actual transitions ---
+
+			_doLogOff() {
+				// Show "Saving your settings..." transition
+				const screen = h("div", {
+						className: "screen-overlay transition-screen"
+					},
+					h("p", null, "Saving your settings..."),
+				);
+				document.body.appendChild(screen);
+				setTimeout(() => {
+					screen.remove();
+					this._destroyAll();
+					showLoginScreen((name) => {
+						this.username = name;
+						setupDesktop();
+						StartMenu.create();
+					});
+				}, 1500);
+			},
+
+			_doRestart() {
+				// "Windows is shutting down..." → boot sequence
+				const screen = h("div", {
+						className: "screen-overlay transition-screen"
+					},
+					h("p", null, "Windows is shutting down..."),
+				);
+				document.body.appendChild(screen);
+				setTimeout(() => {
+					screen.remove();
+					this._destroyAll();
+					// Go through full boot → login flow
+					showBootScreen(() => {
+						showLoginScreen((name) => {
+							this.username = name;
+							setupDesktop();
+							StartMenu.create();
+						});
+					});
+				}, 2000);
+			},
+
+			_doShutDown() {
+				// "Windows is shutting down..." → classic safe-to-turn-off screen
+				const screen = h("div", {
+						className: "screen-overlay transition-screen"
+					},
+					h("p", null, "Windows is shutting down..."),
+				);
+				document.body.appendChild(screen);
+				setTimeout(() => {
+					screen.remove();
+					this._destroyAll();
+					this._showSafeToTurnOff();
+				}, 2000);
+			},
+
+			_doStandby() {
+				// Black screen, click anywhere to wake
+				this._destroyAll();
+				const app = document.getElementById("app");
+				app.innerHTML = "";
+				const screen = h("div", {
+						style: {
+							width: "100%",
+							height: "100%",
+							background: "#000",
+							cursor: "pointer",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center"
+						},
+						onClick: () => {
+							// Wake up — go straight to desktop (no boot/login)
+							setupDesktop();
+							StartMenu.create();
+						},
+					},
+					h("p", {
+						style: {
+							color: "#333",
+							fontSize: "12px",
+							fontFamily: "Arial, sans-serif"
+						}
+					}, "Click anywhere to wake up"),
+				);
+				app.appendChild(screen);
+				// Fade hint out after a moment
+				setTimeout(() => {
+					const p = screen.querySelector("p");
+					if (p) p.style.color = "#111";
+				}, 3000);
+			},
+
+			_showSafeToTurnOff() {
+				const app = document.getElementById("app");
+				app.innerHTML = "";
+				const screen = h("div", {
+						className: "screen-overlay shutdown-screen",
+						style: {
+							position: "relative"
+						},
+					},
+					h("div", null,
+						h("div", {
+							style: {
+								marginBottom: "8px",
+								fontSize: "14px",
+								color: "#808080"
+							}
+						}, "Windows 98"),
+						h("div", {
+							style: {
+								fontSize: "28px",
+								fontWeight: "bold",
+								lineHeight: "1.4"
+							}
+						}, "It's now safe to turn off"),
+						h("div", {
+							style: {
+								fontSize: "28px",
+								fontWeight: "bold"
+							}
+						}, "your computer."),
+					),
+					h("button", {
+						className: "power-btn",
+						onClick: () => {
+							// Power on — full boot sequence
+							showBootScreen(() => {
+								showLoginScreen((name) => {
+									this.username = name;
+									setupDesktop();
+									StartMenu.create();
+								});
+							});
+						}
+					}, "\u23FB Power On"),
+				);
+				app.appendChild(screen);
+			},
+
+			_destroyAll() {
+				for (const id of this.state.openList) {
+					const i = this.state.windows[id];
+					if (i) i.shell.destroy();
+				}
+				this.state = {
+					openList: [],
+					windows: {},
+					activeWin: null,
+					highZ: 10
+				};
+				if (StartMenu.el) {
+					StartMenu.el.remove();
+					StartMenu.el = null;
+					StartMenu.visible = false;
+				}
+			},
+		};
+
+		// Global: close menus on click
+		document.addEventListener("mousedown", () => {
+			ContextMenu.hide();
+			StartMenu.hide();
+		});
+		document.addEventListener("contextmenu", (e) => {
+			if (App.desktopArea) e.preventDefault();
+		});
+
+		// GO!
+		App.init();
+	</script>
+</body>
+
+</html>
