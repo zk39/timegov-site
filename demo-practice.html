@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows 98 Simulator</title>
+  <link rel="stylesheet" href="https://unpkg.com/98.css">
+  <style> 
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		top: 0;
+		padding: 0;
+
+	}
+	html,body {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+	}
+	#app {
+		width: 100%;
+		height: 100%;
+		
+	}
+	#desktop-area {
+		flex:1;
+		position: relative;
+ 		background: #008080;
+ 		overflow: hidden;
+	}
+  </style>
+</head>
+<body>
+  <div id="app">demo
+	
+
+  </div>
+  <script>  
+  // hyperscript 
+  function h(tag,attrs,...children){
+	const el = document.createElement(tag)
+	if(attrs){
+		for(const [k,v] of Object.entries(attrs)) {
+			//
+			//
+			//
+			if (k == 'style' && typeof v =="object"){
+				Object.assign(el.style,v)
+			}
+			else if(k.startsWith("on")) {
+				// onClick -> click
+				el.addEventListener(k.slice(2).toLowerCase(),v)
+
+			}
+			else if(k === 'className'){
+				el.className = v
+			}
+			else if(k === 'innerHTML'){
+				el.innerHTML= v
+			}
+			else el.setAttribute(k,v)
+		}
+	}
+	for(const c of children) {
+		if(c==null) continue
+		if(typeof c =="string"){
+			el.appendChild(document.createTextNode(c))
+
+		}
+		else if (Array.isArray(c)){
+			c.forEach(x=> x && el.appendChild(x))
+		}
+		else
+			el.appendChild(c)
+	}
+	return el
+
+  }
+   const card = h("div", {
+      style: {
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        padding: "16px",
+        width: "200px",
+        fontFamily: "Arial"
+      }
+    },
+      h("h3", null, "Hello"),
+      h("p", { style: { color: "#666" } }, "This is a test."),
+      h("button", {
+        onClick: () => alert("Works!")
+      }, "Click")
+    );
+
+    document.getElementById("app").appendChild(card);
+
+
+	// boot animation
+	function showBootScreen(onDone){
+		const app = document.getElementById('app')
+		app.innerHTML = ''
+		const scr = h('div',{
+			className: "boot-screen"
+		})
+		app.appendChild(scr)
+		const msgs = [
+			'Starting os',
+			'Initializing system devices...',
+			'Loading device drivers...',
+			'os is testing extended memory ... done'
+		]
+		let idx = 0
+		function tick(){
+			if(idx >= msgs.length){
+				setTimeout(()=>{
+					scr.style.opacity = '0';
+					setTimeout(onDone,500)
+				},1500)
+				return;
+			}
+		
+		scr.appendChild(h('div',null,msgs[idx]))
+		scr.scrollTop = scr.scrollHeight;
+		idx++
+		  const delay = idx > 20 ? 400 : idx > 15 ? 200 : idx > 10 ? 100 : 50;
+		  setTimeout(tick,delay)
+	}
+	setInterval(tick,500)
+	}
+	   showBootScreen(() => {
+      console.log("Boot finished");
+      document.getElementById("app").innerHTML = "<h1>Boot Done</h1>";
+    });
+   </script>
+</body>
+</html>
