@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>深潜者的互联网考古笔记</title>
+<style>
+body {
+  background: #f5f5f5;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  color: #222;
+}
+
+a {
+  color: #003399;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* layout */
+.wrapper {
+  width: 900px;
+  margin: 20px auto;
+  background: #fff;
+  border: 1px solid #ccc;
+}
+
+.header {
+  padding: 15px;
+  border-bottom: 1px solid #ccc;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #666;
+}
+
+.content {
+  display: flex;
+}
+
+/* sidebar */
+.sidebar {
+  width: 220px;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  background: #fafafa;
+}
+
+.sidebar h3 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.sidebar li {
+  margin: 5px 0;
+}
+
+/* main */
+.main {
+  flex: 1;
+  padding: 15px;
+}
+
+.post {
+  margin-bottom: 20px;
+}
+
+.post-title {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.post-meta {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.post-desc {
+  font-size: 13px;
+  color: #444;
+}
+
+/* footer */
+.footer {
+  padding: 10px;
+  font-size: 11px;
+  color: #777;
+  border-top: 1px solid #ccc;
+  text-align: center;
+}
+
+/* counter */
+.counter {
+  font-family: monospace;
+  background: #000;
+  color: #0f0;
+  padding: 3px 6px;
+  display: inline-block;
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- header -->
+  <div class="header">
+    <div class="title">深潜者的互联网考古笔记</div>
+    <div class="subtitle">记录一些已经消失，或者正在消失的东西。</div>
+  </div>
+
+  <div class="content">
+
+    <!-- sidebar -->
+    <div class="sidebar">
+
+      <h3>关于我</h3>
+      <p>
+        王克无<br>
+        做过一些网站维护，也折腾过论坛和旧系统。<br><br>
+        很多东西再不记下来，就真的没人记得了。
+      </p>
+
+      <h3>导航</h3>
+      <ul>
+        <li><a href="#">首页</a></li>
+        <li><a href="#">归档</a></li>
+        <li><a href="#">标签</a></li>
+        <li><a href="#">留言</a></li>
+      </ul>
+
+      <h3>友链</h3>
+      <ul>
+        <li><a href="#">旧站点档案馆</a></li>
+        <li><a href="#">个人站收藏</a></li>
+        <li><a href="#">网络碎片记录</a></li>
+      </ul>
+
+      <h3>站点信息</h3>
+      <p>
+        最后更新：2023-04-17<br>
+        访问：
+        <span class="counter">0001847</span>
+      </p>
+
+    </div>
+
+    <!-- main -->
+    <div class="main">
+
+      <div class="post">
+        <div class="post-title">
+          <a href="#">TimeGov：一个不应该存在的归档系统</a>
+        </div>
+        <div class="post-meta">2023-04-10</div>
+        <div class="post-desc">
+          最近在翻一些旧数据的时候，碰到了一个很奇怪的系统。它的时间记录方式和常见的数据库不太一样……
+        </div>
+      </div>
+
+      <div class="post">
+        <div class="post-title">
+          <a href="#">TimeGov（二）：时间戳的问题</a>
+        </div>
+        <div class="post-meta">2023-04-13</div>
+        <div class="post-desc">
+          上一篇提到的时间结构，这几天仔细看了一下，发现它不是简单的偏移，而是……
+        </div>
+      </div>
+
+      <div class="post">
+        <div class="post-title">
+          <a href="#">TimeGov（三）：登录方式</a>
+        </div>
+        <div class="post-meta">2023-04-16</div>
+        <div class="post-desc">
+          有人问我这个系统能不能进去。我原本觉得不太可能，但后来试了一下……
+        </div>
+      </div>
+
+      <div class="post">
+        <div class="post-title">
+          <a href="#" style="color:red">（无标题）</a>
+        </div>
+        <div class="post-meta">2023-04-17</div>
+        <div class="post-desc">
+          它在用我的声音说话。
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+    Powered by hand-written HTML · No framework · No tracking
+  </div>
+
+</div>
+
+</body>
+</html>
