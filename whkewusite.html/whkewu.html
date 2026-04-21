@@ -1,219 +1,906 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8">
-<title>深潜者的互联网考古笔记</title>
-<style>
-body {
-  background: #f5f5f5;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
-  color: #222;
-}
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>深潜者的互联网考古笔记</title>
+	<style>
+		/* ═══════ RESET & BASE ═══════ */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
 
-a {
-  color: #003399;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+		body {
+			background: #c0c0c0;
+			font-family: "宋体", "SimSun", "Courier New", monospace;
+			font-size: 13px;
+			color: #222;
+			line-height: 1.7;
+			min-height: 100vh;
+		}
 
-/* layout */
-.wrapper {
-  width: 900px;
-  margin: 20px auto;
-  background: #fff;
-  border: 1px solid #ccc;
-}
+		a {
+			color: #0000ee;
+			text-decoration: underline;
+			cursor: pointer;
+		}
 
-.header {
-  padding: 15px;
-  border-bottom: 1px solid #ccc;
-}
+		a:visited {
+			color: #551a8b;
+		}
 
-.title {
-  font-size: 20px;
-  font-weight: bold;
-}
+		a:hover {
+			color: #ff0000;
+		}
 
-.subtitle {
-  font-size: 12px;
-  color: #666;
-}
+		/* ═══════ WRAPPER ═══════ */
+		.wrapper {
+			width: 960px;
+			margin: 16px auto;
+			background: #fff;
+			border: 2px outset #dfdfdf;
+			box-shadow: 2px 2px 0 #888;
+		}
 
-.content {
-  display: flex;
-}
+		/* ═══════ HEADER ═══════ */
+		.header {
+			padding: 12px 16px;
+			border-bottom: 2px groove #ccc;
+			background: linear-gradient(180deg, #e8e8e8, #d0d0d0);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
 
-/* sidebar */
-.sidebar {
-  width: 220px;
-  border-right: 1px solid #ddd;
-  padding: 15px;
-  background: #fafafa;
-}
+		.header-left .title {
+			font-size: 18px;
+			font-weight: bold;
+			letter-spacing: 1px;
+			color: #111;
+		}
 
-.sidebar h3 {
-  font-size: 13px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #ddd;
-}
+		.header-left .subtitle {
+			font-size: 11px;
+			color: #666;
+			margin-top: 2px;
+		}
 
-.sidebar ul {
-  list-style: none;
-  padding-left: 0;
-}
+		.header-right {
+			font-size: 11px;
+			color: #888;
+			text-align: right;
+		}
 
-.sidebar li {
-  margin: 5px 0;
-}
+		/* ═══════ CONTENT LAYOUT ═══════ */
+		.content {
+			display: flex;
+			min-height: 600px;
+		}
 
-/* main */
-.main {
-  flex: 1;
-  padding: 15px;
-}
+		/* ═══════ SIDEBAR ═══════ */
+		.sidebar {
+			width: 200px;
+			border-right: 2px groove #ccc;
+			padding: 12px;
+			background: #f0f0f0;
+			flex-shrink: 0;
+		}
 
-.post {
-  margin-bottom: 20px;
-}
+		.sidebar-section {
+			margin-bottom: 16px;
+		}
 
-.post-title {
-  font-size: 15px;
-  font-weight: bold;
-}
+		.sidebar-section h3 {
+			font-size: 12px;
+			font-weight: bold;
+			border-bottom: 1px solid #999;
+			padding-bottom: 4px;
+			margin-bottom: 6px;
+			color: #333;
+		}
 
-.post-meta {
-  font-size: 11px;
-  color: #888;
-  margin-bottom: 6px;
-}
+		.sidebar-section p {
+			font-size: 11px;
+			color: #555;
+			line-height: 1.6;
+		}
 
-.post-desc {
-  font-size: 13px;
-  color: #444;
-}
+		.sidebar-section ul {
+			list-style: square;
+			padding-left: 16px;
+		}
 
-/* footer */
-.footer {
-  padding: 10px;
-  font-size: 11px;
-  color: #777;
-  border-top: 1px solid #ccc;
-  text-align: center;
-}
+		.sidebar-section li {
+			margin: 3px 0;
+			font-size: 11px;
+		}
 
-/* counter */
-.counter {
-  font-family: monospace;
-  background: #000;
-  color: #0f0;
-  padding: 3px 6px;
-  display: inline-block;
-  margin-top: 5px;
-}
-</style>
+		.sidebar-section li a {
+			font-size: 11px;
+		}
+
+		.friend-links a {
+			display: block;
+			font-size: 11px;
+			margin: 2px 0;
+		}
+
+		/* ═══════ MAIN ═══════ */
+		.main {
+			flex: 1;
+			padding: 16px 20px;
+			overflow-y: auto;
+		}
+
+		/* ═══════ ARTICLE LIST VIEW ═══════ */
+		.page-title {
+			font-size: 15px;
+			font-weight: bold;
+			border-bottom: 2px solid #333;
+			padding-bottom: 6px;
+			margin-bottom: 12px;
+		}
+
+		.post-list-item {
+			display: flex;
+			align-items: baseline;
+			gap: 12px;
+			padding: 6px 0;
+			border-bottom: 1px dashed #ccc;
+			cursor: pointer;
+		}
+
+		.post-list-item:hover {
+			background: #f5f5f5;
+		}
+
+		.post-list-date {
+			font-size: 11px;
+			color: #999;
+			font-family: "Courier New", monospace;
+			white-space: nowrap;
+			min-width: 80px;
+		}
+
+		.post-list-title {
+			font-size: 13px;
+			color: #0000ee;
+		}
+
+		.post-list-title:hover {
+			color: #ff0000;
+		}
+
+		.post-list-item.no-title .post-list-title {
+			color: #999;
+			font-style: italic;
+		}
+
+		/* ═══════ ARTICLE DETAIL VIEW ═══════ */
+		.article-view {
+			display: none;
+		}
+
+		.article-view.active {
+			display: block;
+		}
+
+		.back-btn {
+			font-size: 11px;
+			margin-bottom: 12px;
+			display: inline-block;
+			cursor: pointer;
+			color: #0000ee;
+			text-decoration: underline;
+		}
+
+		.back-btn:hover {
+			color: #ff0000;
+		}
+
+		.article-box {
+			border: 1px solid #ccc;
+			background: #fafafa;
+			padding: 16px 20px;
+			margin-bottom: 20px;
+		}
+
+		.article-box h2 {
+			font-size: 15px;
+			font-weight: bold;
+			border-left: 4px solid #333;
+			padding-left: 10px;
+			margin-bottom: 4px;
+		}
+
+		.article-box .meta {
+			font-size: 11px;
+			color: #888;
+			margin-bottom: 14px;
+			padding-left: 14px;
+		}
+
+		.article-content {
+			font-size: 13px;
+			line-height: 1.8;
+			color: #333;
+		}
+
+		.article-content p {
+			margin-bottom: 10px;
+			text-indent: 0;
+		}
+
+		/* ═══════ COMMENTS ═══════ */
+		.comments-section {
+			border-top: 1px dashed #bbb;
+			margin-top: 16px;
+			padding-top: 12px;
+		}
+
+		.comments-title {
+			font-size: 12px;
+			font-weight: bold;
+			color: #666;
+			margin-bottom: 8px;
+		}
+
+		.comment {
+			padding: 6px 0;
+			border-bottom: 1px dotted #ddd;
+			font-size: 12px;
+		}
+
+		.comment:last-child {
+			border-bottom: none;
+		}
+
+		.comment-user {
+			font-weight: bold;
+			color: #336;
+		}
+
+		.comment-date {
+			font-size: 10px;
+			color: #aaa;
+			margin-left: 6px;
+		}
+
+		.comment-text {
+			margin-top: 2px;
+			color: #444;
+		}
+
+		.comment-reply {
+			margin-top: 4px;
+			padding: 4px 0 4px 12px;
+			border-left: 2px solid #ccc;
+			color: #555;
+		}
+
+		.comment-reply .reply-label {
+			font-size: 10px;
+			color: #0066cc;
+			font-weight: bold;
+		}
+
+		/* ═══════ AI CHATBOX ═══════ */
+		.chatbox {
+			position: fixed;
+			bottom: 16px;
+			right: 16px;
+			width: 300px;
+			border: 2px outset #dfdfdf;
+			background: #fff;
+			box-shadow: 2px 2px 0 #888;
+			z-index: 1000;
+		}
+
+		.chatbox-header {
+			background: linear-gradient(180deg, #0054e3, #003bb5);
+			color: #fff;
+			padding: 4px 8px;
+			font-size: 11px;
+			font-weight: bold;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			cursor: default;
+		}
+
+		.chatbox-header span {
+			font-size: 10px;
+			font-weight: normal;
+			opacity: 0.8;
+		}
+
+		.chatbox-toggle {
+			background: none;
+			border: 1px outset #7799dd;
+			color: #fff;
+			font-size: 11px;
+			cursor: pointer;
+			padding: 0 4px;
+			line-height: 16px;
+			font-family: monospace;
+		}
+
+		.chatbox-toggle:active {
+			border-style: inset;
+		}
+
+		.chatbox-body {
+			height: 250px;
+			overflow-y: auto;
+			padding: 8px;
+			font-size: 12px;
+			border-top: 1px solid #ccc;
+			background: #f9f9f9;
+		}
+
+		.chatbox-body.collapsed {
+			display: none;
+		}
+
+		.chat-msg-ai,
+		.chat-msg-user {
+			margin-bottom: 6px;
+			line-height: 1.5;
+		}
+
+		.chat-msg-ai {
+			color: #333;
+		}
+
+		.chat-msg-ai .sender {
+			color: #0054e3;
+			font-weight: bold;
+			font-size: 11px;
+		}
+
+		.chat-msg-user {
+			text-align: right;
+		}
+
+		.chat-msg-user .sender {
+			color: #888;
+			font-weight: bold;
+			font-size: 11px;
+		}
+
+		.chat-msg-user .bubble,
+		.chat-msg-ai .bubble {
+			display: inline-block;
+			padding: 4px 8px;
+			border-radius: 0;
+			margin-top: 2px;
+			max-width: 85%;
+			text-align: left;
+			font-size: 12px;
+		}
+
+		.chat-msg-ai .bubble {
+			background: #e8e8e8;
+			border: 1px solid #ccc;
+		}
+
+		.chat-msg-user .bubble {
+			background: #d5e5ff;
+			border: 1px solid #aaccff;
+		}
+
+		.chatbox-input {
+			display: flex;
+			border-top: 1px solid #ccc;
+		}
+
+		.chatbox-input input {
+			flex: 1;
+			border: none;
+			padding: 6px 8px;
+			font-size: 12px;
+			font-family: "宋体", "SimSun", monospace;
+			outline: none;
+			background: #fff;
+		}
+
+		.chatbox-input button {
+			padding: 6px 12px;
+			background: #e0e0e0;
+			border: 1px outset #ccc;
+			font-size: 11px;
+			cursor: pointer;
+			font-family: "宋体", "SimSun", monospace;
+		}
+
+		.chatbox-input button:active {
+			border-style: inset;
+		}
+
+		.chatbox-status {
+			font-size: 10px;
+			color: #999;
+			padding: 2px 8px;
+			background: #f0f0f0;
+			border-top: 1px solid #ddd;
+		}
+
+		.chatbox-status .dot {
+			display: inline-block;
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: #aaa;
+			margin-right: 4px;
+			vertical-align: middle;
+		}
+
+		.chatbox-status .dot.online {
+			background: #4a4;
+			animation: blink-dot 2s infinite;
+		}
+
+		@keyframes blink-dot {
+
+			0%,
+			100% {
+				opacity: 1;
+			}
+
+			50% {
+				opacity: 0.4;
+			}
+		}
+
+		/* ═══════ FOOTER ═══════ */
+		.footer {
+			padding: 8px 16px;
+			font-size: 10px;
+			color: #888;
+			border-top: 2px groove #ccc;
+			text-align: center;
+			background: linear-gradient(180deg, #e8e8e8, #d0d0d0);
+			line-height: 1.6;
+		}
+
+		.counter {
+			font-family: "Courier New", monospace;
+			background: #000;
+			color: #0f0;
+			padding: 2px 6px;
+			display: inline-block;
+			margin-top: 3px;
+			font-size: 11px;
+			letter-spacing: 1px;
+		}
+
+		/* ═══════ UTILITY ═══════ */
+		.hidden {
+			display: none;
+		}
+
+		/* article #1 special styling */
+		.article-glitch {
+			color: #999;
+			font-style: italic;
+		}
+	</style>
 </head>
 
 <body>
 
-<div class="wrapper">
+	<div class="wrapper">
 
-  <!-- header -->
-  <div class="header">
-    <div class="title">深潜者的互联网考古笔记</div>
-    <div class="subtitle">记录一些已经消失，或者正在消失的东西。</div>
-  </div>
+		<!-- HEADER -->
+		<div class="header">
+			<div class="header-left">
+				<div class="title">深潜者的互联网考古笔记</div>
+				<div class="subtitle">记录一些已经消失，或者正在消失的东西。</div>
+			</div>
+			<div class="header-right">
+				Since 2004<br>
+				Last updated: 2023.04.17
+			</div>
+		</div>
 
-  <div class="content">
+		<div class="content">
 
-    <!-- sidebar -->
-    <div class="sidebar">
+			<!-- SIDEBAR -->
+			<div class="sidebar">
 
-      <h3>关于我</h3>
-      <p>
-        王克无<br>
-        做过一些网站维护，也折腾过论坛和旧系统。<br><br>
-        很多东西再不记下来，就真的没人记得了。
-      </p>
+				<div class="sidebar-section">
+					<h3>关于博主</h3>
+					<p>
+						王克无 / 深潜者<br>
+						互联网考古 / 数字遗产记录<br><br>
+						ICQ: 18273645<br>
+						Email: wangkewu80@gmail.com<br><br>
+						<span style="font-size:10px;color:#888">很多东西再不记下来，<br>就真的没人记得了。</span>
+					</p>
+				</div>
 
-      <h3>导航</h3>
-      <ul>
-        <li><a href="#">首页</a></li>
-        <li><a href="#">归档</a></li>
-        <li><a href="#">标签</a></li>
-        <li><a href="#">留言</a></li>
-      </ul>
+				<div class="sidebar-section">
+					<h3>友情链接</h3>
+					<div class="friend-links">
+						<a href="https://zhangkun.dev" target="_blank">zhangkun.dev</a>
+						<a href="#" onclick="return false">碎片档案馆</a>
+						<a href="#" onclick="return false">404博物馆</a>
+						<a href="#" onclick="return false"
+							style="color:#aaa;text-decoration:line-through">旧时光论坛（已关闭）</a>
+					</div>
+				</div>
 
-      <h3>友链</h3>
-      <ul>
-        <li><a href="#">旧站点档案馆</a></li>
-        <li><a href="#">个人站收藏</a></li>
-        <li><a href="#">网络碎片记录</a></li>
-      </ul>
+				<div class="sidebar-section">
+					<h3>站点信息</h3>
+					<p style="font-size:10px">
+						文章数：7<br>
+						总文章数：21<br>
+						运行天数：<span id="run-days">--</span><br>
+						访客：<span class="counter" id="visitor-count">--</span>
+					</p>
+				</div>
 
-      <h3>站点信息</h3>
-      <p>
-        最后更新：2023-04-17<br>
-        访问：
-        <span class="counter">0001847</span>
-      </p>
+			</div>
 
+			<!-- MAIN -->
+			<div class="main">
+
+				<!-- LIST VIEW -->
+				<div id="list-view">
+					<div class="page-title">日志归档 · 全部文章</div>
+
+					<div class="post-list-item no-title" onclick="showArticle(1)">
+						<span class="post-list-date">2023.04.17</span>
+						<span class="post-list-title">[无标题]</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(2)">
+						<span class="post-list-date">2023.04.10</span>
+						<span class="post-list-title">我给博客装了一个AI替身</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(3)">
+						<span class="post-list-date">2023.04.03</span>
+						<span class="post-list-title">我找到了一个还在运行的时间校准服务</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(4)">
+						<span class="post-list-date">2023.02.15</span>
+						<span class="post-list-title">有些网站死了，但没有人知道它们活过</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(5)">
+						<span class="post-list-date">2020.08.12</span>
+						<span class="post-list-title">ChinaRen：两千万人的校友录，说没就没了</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(6)">
+						<span class="post-list-date">2019.06.01</span>
+						<span class="post-list-title">十五年了，搬个家</span>
+					</div>
+					<div class="post-list-item" onclick="showArticle(7)">
+						<span class="post-list-date">2004.11.03</span>
+						<span class="post-list-title">你好世界</span>
+					</div>
+
+					<p style="font-size:10px;color:#aaa;text-align:center;margin-top:20px">共 7 篇 · END OF LIST</p>
+				</div>
+
+				<!-- ARTICLE VIEW -->
+				<div id="article-view" class="article-view"></div>
+
+			</div>
+		</div>
+
+		<!-- FOOTER -->
+		<div class="footer">
+			This site is hand-coded in pure HTML. No framework. No JavaScript (almost).<br>
+			Best viewed with Internet Explorer 6.0 @ 800×600<br>
+			© 2004-2023 深潜者 · All rights reserved
+		</div>
+
+	</div>
+
+	<!-- AI CHATBOX -->
+	<!-- 侧面展开标签 -->
+	<div id="chat-side-tab" onclick="toggleChat()"
+		style="position:fixed;right:0;bottom:120px;background:linear-gradient(180deg,#0054e3,#003bb5);color:#fff;writing-mode:vertical-rl;padding:10px 6px;cursor:pointer;font-size:11px;font-weight:bold;z-index:1001;border:2px outset #7799dd;border-right:none;box-shadow:-2px 2px 0 #888;letter-spacing:1px;">
+		💬 AI助手
+	</div>
+
+	<div class="chatbox" id="chatbox" style="display:none;">
+		<div class="chatbox-header">
+			<div>
+				深潜者AI助手
+				<span>· 博主不在线时自动回复</span>
+			</div>
+			<button class="chatbox-toggle" onclick="toggleChat()" id="chat-toggle-btn">_</button>
+		</div>
+		<div class="chatbox-body" id="chat-body">
+			<div class="chat-msg-ai">
+				<span class="sender">深潜者AI：</span>
+				<div class="bubble">你好，我是深潜者的AI助手。博主目前不在线，有什么问题我可以尽量帮你回答。</div>
+			</div>
+		</div>
+		<div class="chatbox-status">
+			<span class="dot online"></span>AI自动回复中 · 博主离线
+		</div>
+		<div class="chatbox-input">
+			<input type="text" id="chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendMsg()">
+			<button onclick="sendMsg()">发送</button>
+		</div>
+	</div>
+
+	<script>
+		/* ═══════ ARTICLE DATA ═══════ */
+		const POSTS = [{
+				id: 1,
+				date: '2023.04.17',
+				title: null,
+				content: `<p class="article-glitch">　</p>
+<p class="article-glitch">　</p>
+<p class="article-glitch">我还在这里。</p>
+<p class="article-glitch">　</p>
+<p class="article-glitch">不对。</p>
+<p class="article-glitch">　</p>
+<p class="article-glitch">这篇文章不是我写的。</p>`,
+				comments: []
+			},
+			{
+				id: 2,
+				date: '2023.04.10',
+				title: '我给博客装了一个AI替身',
+				content: `<p>最近评论区和私信多了一些，问timegov的、问考古方法的、问某个旧网站还能不能打开的。挺开心的，说明有人在看。</p>
+<p>但问题是我不可能一直盯着。上班的时候没法回，晚上有时候研究东西研究到很晚第二天起不来，好几条留言隔了两三天才回，怪不好意思的。</p>
+<p>所以我搞了个东西。</p>
+<p>把我博客上所有文章、评论区回复、还有一些我平时记的笔记喂给了一个开源LLM，微调了一下，部署在侧边栏当自动回复。标注了"博主不在线时自动回复"，这样大家知道不是我本人。</p>
+<p>测试了几轮，效果还行。回答风格跟我差不多，偶尔会编一些我没写过的东西，但大方向没问题。问它我是谁，它说"我是深潜者的AI助手"，没有装成我，这点我特意调过。</p>
+<p>有一个小bug一直没修好，它偶尔会把回复间隔搞得特别均匀，每条消息都是差不多秒数之后弹出来。真人聊天不可能这样的。不过无所谓，又不是图灵测试，能帮我顶一阵就行。</p>
+<p>大家有问题可以随时在对话框里问，我在线的时候是我回复，不在线的时候是它回复。应该分不太出来。</p>
+<p>说实话有点奇妙。我看着它用我的语气说话，回答我会回答的问题。像是另一个我坐在这里替我值班。</p>
+<p>希望它别比我受欢迎就行哈哈。</p>`,
+				comments: [{
+						user: '路过的猫',
+						date: '2023.04.11',
+						text: '测试一下AI能回我吗',
+						reply: '能的！你好你好。不过这条是我本人回的哈哈'
+					},
+					{
+						user: 'archive_lover',
+						date: '2023.04.12',
+						text: '感觉这个AI回复得还挺快的',
+						reply: '比我快多了，毕竟它不用睡觉'
+					}
+				]
+			},
+			{
+				id: 3,
+				date: '2023.04.03',
+				title: '我找到了一个还在运行的时间校准服务',
+				content: `<p>起因是我在研究一批2019年前后死掉的政府外包项目网站，大部分都是典型的下场，外包公司合同到期，没人续费，域名释放，内容消失。但在一堆死链中间我发现了一个还活着的：timegov.org。</p>
+<p>第一反应是又一个被遗忘的政府时间服务，类似NTP授时站之类的东西。但点进去发现不太对，界面太新了。不是那种零几年的政府网站审美，倒像是最近几年用现代前端框架搭的。但WHOIS查不到运营方信息，备案号查不到，搜索引擎几乎没有收录。</p>
+<p>一个看起来很专业的网站，没有任何来源信息，也没有人讨论过它。</p>
+<p>我注册了一个账号试了试。注册流程很简单，Record ID是自动分配的，我拿到的是TG-0847，Access Key系统生成。进去之后能看到一个归档数据库，大部分条目是灰的看不了，有几个能点开但内容看不太懂，像是某种时间戳日志。</p>
+<p>有意思的是那个Device Sync功能。它会读取你设备的时钟信息，然后告诉你跟"系统标准时间"有多少偏差。我试了一下偏差是+0.003秒，这个精度对一个没有来源的野生网站来说不太正常。</p>
+<p>我打算继续挖。这种"不知道谁做的、不知道为什么还在运行、没有人讨论过"的网站，是我最喜欢的类型。</p>
+<p>下次更新说说我找到了什么。大家有信息的话评论区告诉我，Record ID：TG-0847。</p>`,
+				comments: [{
+						user: '数字废墟',
+						date: '2023.04.04',
+						text: '我也搜了一下timegov，确实什么信息都没有，WHOIS是隐私保护的。有点意思',
+						reply: '对吧！我查了几个whois数据库都查不到真实信息，这种注册方式本身就不太像政府项目'
+					},
+					{
+						user: '考古新人',
+						date: '2023.04.05',
+						text: '博主你Access Key是多少啊，我也想进去看看',
+						reply: '哈哈这个不能直接给吧，不过Key的格式不复杂，你自己注册一个试试？我记得我当时是在…算了你自己研究研究'
+					},
+					{
+						user: '匿名',
+						date: '2023.04.06',
+						text: '建议别碰这个网站',
+						reply: null
+					}
+				]
+			},
+			{
+				id: 4,
+				date: '2023.02.15',
+				title: '有些网站死了，但没有人知道它们活过',
+				content: `<p>前两天我挖到一个网站，域名是个人名拼音，首页写着"欢迎来到我的个人主页"。用的是FrontPage做的，背景是星空gif，左边一排霓虹色的导航栏，有"我的相册""我的日记""我的链接"。</p>
+<p>相册点不开。日记只有两篇，一篇是2003年写的搬家记录，一篇是2004年元旦的新年愿望。链接页面挂了七八个友情链接，全部404。</p>
+<p>这个网站最后更新时间是2004年1月3日。到今天快二十年了，域名居然还没过期，服务器还在跑。每年几十块的续费，不知道是谁在付，也许是自动扣款，卡里还有钱，主人忘了这件事，或者不在了。</p>
+<p>没有访客计数器。没有评论区。我大概是十年来第一个打开它的人。</p>
+<p>我在想这个人现在在干嘛。四十多岁了吧，可能跟我差不多大，可能也在某个公司上班，完全忘了自己二十年前做过一个个人主页。也可能他已经不在了，但他的主页还在，像一颗没有人看的星星一样挂在互联网的角落。</p>
+<p>有时候我觉得我做的事有点像给死人扫墓。大部分坟前没有花，没有名字，只有一个打不开的链接证明这里曾经有过什么。</p>`,
+				comments: [{
+						user: '老网虫',
+						date: '2023.02.16',
+						text: '看哭了。我高中时候做的个人主页也早就没了',
+						reply: '是啊，那个年代做个人主页是一件很认真的事。现在想想，那些主页可能是很多人在互联网上留下的第一个痕迹'
+					},
+					{
+						user: '路过',
+						date: '2023.02.18',
+						text: '博主能分享一下那个网站地址吗？想去看看',
+						reply: '私信你了。不过不确定还能不能打开，这种站随时可能没'
+					}
+				]
+			},
+			{
+				id: 5,
+				date: '2020.08.12',
+				title: 'ChinaRen：两千万人的校友录，说没就没了',
+				content: `<p>你现在去搜ChinaRen，维基百科会告诉你它是"中国早期社交网站"，2002年被搜狐收购，2009年改版，2019年彻底关闭。三句话讲完，干干净净。</p>
+<p>但它不是三句话的东西。</p>
+<p>ChinaRen校友录巅峰时期有两千多万注册用户。你在上面能找到你的小学、初中、高中，你的班级，你同学的留言，毕业照，有人写的临别赠言。很多人唯一一张初中毕业照就存在上面。</p>
+<p>2019年搜狐关了它的时候没有提前通知，没有数据导出工具，没有任何迁移方案。有人发现的时候已经打不开了。</p>
+<p>我当时试过用Wayback Machine找，能找到首页的快照，但是用户内容（班级页面、留言板、照片）全是动态加载的，没有被抓取过，一条都没有。</p>
+<p>两千万人的青春留言，就这么蒸发了。</p>
+<p>后来我在一个旧硬盘论坛里找到一个帖子，有人在2018年把自己班级页面的内容手动截了图发上来，说"总觉得这网站快不行了"。底下有人回复"你想多了吧"。</p>
+<p>就这一个人截了图。就这一个班。</p>
+<p>我有时候在想，互联网到底保存了什么。我们以为一切都在云上，但其实云就是别人的电脑，别人把电脑关了，你什么都不剩。</p>`,
+				comments: [{
+						user: '校友录难民',
+						date: '2020.08.13',
+						text: '我初中毕业照就在上面…现在真的一张都找不到了',
+						reply: '抱歉听到这个。如果你记得班级名的话可以试试在Wayback Machine上碰碰运气，虽然希望不大'
+					},
+					{
+						user: '搜狐前员工',
+						date: '2020.08.15',
+						text: '当时确实是突然关的，内部也没怎么通知',
+						reply: '谢谢确认。唉'
+					}
+				]
+			},
+			{
+				id: 6,
+				date: '2019.06.01',
+				title: '十五年了，搬个家',
+				content: `<p>各位好。如果有"各位"的话。</p>
+<p>十五年前我在这里写了第一篇文章，说要记一记在网上找到的奇怪网站。然后就没有然后了。工作忙了，结婚了，离婚了，换了几份工作，这个破页面我几乎忘了它的存在。</p>
+<p>前两天翻旧硬盘找东西，发现了当年的FTP密码，试着登上去一看，居然还在。十五年了，空间商还没倒闭，也是个奇迹。</p>
+<p>首页还是那个星空gif背景。留言板里有三条留言，两条广告，一条写着"路过"，2006年的。</p>
+<p>我决定把这里搬到新的博客系统上来。内容没什么好搬的，就那一篇。但这个域名我想留着。</p>
+<p>四十岁了。当年说的"记一记在网上找到的东西"，现在反而真的想做了。这些年我看着太多网站消失，太多东西说没就没。我自己这个破页面都差点没了。</p>
+<p>重新开始吧。</p>`,
+				comments: [{
+					user: '路过',
+					date: '2006.03.17',
+					text: '路过',
+					reply: null
+				}]
+			},
+			{
+				id: 7,
+				date: '2004.11.03',
+				title: '你好世界',
+				content: `<p>好，终于搞定了。</p>
+<p>折腾了一个礼拜，用FrontPage做了这个页面，又花了两天把空间和域名弄好。虽然丑了点但好歹能打开了。</p>
+<p>自我介绍一下。我叫王克无，二十四，刚工作没多久，在一家电脑城旁边的小公司装机修电脑。工资不高但是清闲，每天最大的乐趣就是上网瞎逛。</p>
+<p>最近迷上了一件事，找那些奇奇怪怪的网站。不是大站，是那种个人做的、没什么人知道的小网站。有人在上面写诗，有人在上面记账，有人做了一个网页就放了一张猫的照片，什么功能都没有。</p>
+<p>我觉得特别有意思。互联网上到底有多少这种没人看的角落？</p>
+<p>开这个页面也没什么目的，就是想记一记我找到的东西。有人看就看，没人看就算了。</p>
+<p>对了，如果你碰巧点进来了，留个言呗。</p>`,
+				comments: []
+			}
+		];
+
+		/* ═══════ NAVIGATION ═══════ */
+		function showArticle(id) {
+			const post = POSTS.find(p => p.id === id);
+			if (!post) return;
+
+			document.getElementById('list-view').style.display = 'none';
+			const av = document.getElementById('article-view');
+			av.classList.add('active');
+
+			let commentsHtml = '';
+			if (post.comments.length > 0) {
+				commentsHtml = `<div class="comments-section">
+      <div class="comments-title">评论区 (${post.comments.length})</div>`;
+				post.comments.forEach(c => {
+					commentsHtml += `<div class="comment">
+        <span class="comment-user">${c.user}</span>
+        <span class="comment-date">${c.date}</span>
+        <div class="comment-text">${c.text}</div>
+        ${c.reply ? `<div class="comment-reply"><span class="reply-label">博主回复：</span>${c.reply}</div>` : ''}
+      </div>`;
+				});
+				commentsHtml += '</div>';
+			}
+
+			const titleDisplay = post.title ? post.title : '<span class="article-glitch">[无标题]</span>';
+
+			av.innerHTML = `
+    <a class="back-btn" onclick="backToList()">← 返回文章列表</a>
+    <div class="article-box">
+      <h2>#${post.id} · ${titleDisplay}</h2>
+      <div class="meta">发布时间：${post.date}</div>
+      <div class="article-content">${post.content}</div>
+      ${commentsHtml}
     </div>
+  `;
 
-    <!-- main -->
-    <div class="main">
+			window.scrollTo(0, 0);
+		}
 
-      <div class="post">
-        <div class="post-title">
-          <a href="#">TimeGov：一个不应该存在的归档系统</a>
-        </div>
-        <div class="post-meta">2023-04-10</div>
-        <div class="post-desc">
-          最近在翻一些旧数据的时候，碰到了一个很奇怪的系统。它的时间记录方式和常见的数据库不太一样……
-        </div>
-      </div>
+		function backToList() {
+			document.getElementById('list-view').style.display = 'block';
+			const av = document.getElementById('article-view');
+			av.classList.remove('active');
+			av.innerHTML = '';
+			window.scrollTo(0, 0);
+		}
 
-      <div class="post">
-        <div class="post-title">
-          <a href="#">TimeGov（二）：时间戳的问题</a>
-        </div>
-        <div class="post-meta">2023-04-13</div>
-        <div class="post-desc">
-          上一篇提到的时间结构，这几天仔细看了一下，发现它不是简单的偏移，而是……
-        </div>
-      </div>
+		/* ═══════ CHATBOX ═══════ */
+		let chatCollapsed = true;
 
-      <div class="post">
-        <div class="post-title">
-          <a href="#">TimeGov（三）：登录方式</a>
-        </div>
-        <div class="post-meta">2023-04-16</div>
-        <div class="post-desc">
-          有人问我这个系统能不能进去。我原本觉得不太可能，但后来试了一下……
-        </div>
-      </div>
+		function toggleChat() {
+			chatCollapsed = !chatCollapsed;
+			const chatbox = document.getElementById('chatbox');
+			const sideTab = document.getElementById('chat-side-tab');
+			chatbox.style.display = chatCollapsed ? 'none' : 'block';
+			sideTab.style.display = chatCollapsed ? 'block' : 'none';
+		}
 
-      <div class="post">
-        <div class="post-title">
-          <a href="#" style="color:red">（无标题）</a>
-        </div>
-        <div class="post-meta">2023-04-17</div>
-        <div class="post-desc">
-          它在用我的声音说话。
-        </div>
-      </div>
+		function sendMsg() {
+			const input = document.getElementById('chat-input');
+			const text = input.value.trim();
+			if (!text) return;
 
-    </div>
-  </div>
+			const body = document.getElementById('chat-body');
 
-  <!-- footer -->
-  <div class="footer">
-    Powered by hand-written HTML · No framework · No tracking
-  </div>
+			// user message
+			body.innerHTML += `<div class="chat-msg-user">
+    <span class="sender">你：</span>
+    <div class="bubble">${escapeHtml(text)}</div>
+  </div>`;
 
-</div>
+			input.value = '';
+			body.scrollTop = body.scrollHeight;
+
+			// AI response (placeholder - will be replaced with actual AI logic)
+			setTimeout(() => {
+				const responses = [
+					'你好！有什么关于互联网考古的问题我可以帮你回答？',
+					'这个问题很有意思，让我想想…',
+					'博主之前在文章里提到过类似的话题，你可以翻翻看。',
+					'嗯，我理解你的问题。不过这个我可能不太确定，等博主上线了你可以直接问他。',
+					'说实话这个我也不太清楚，毕竟我只是个AI嘛，知识有限。'
+				];
+				const resp = responses[Math.floor(Math.random() * responses.length)];
+				body.innerHTML += `<div class="chat-msg-ai">
+      <span class="sender">深潜者AI：</span>
+      <div class="bubble">${resp}</div>
+    </div>`;
+				body.scrollTop = body.scrollHeight;
+			}, 800 + Math.random() * 1200);
+		}
+
+		function escapeHtml(str) {
+			const div = document.createElement('div');
+			div.textContent = str;
+			return div.innerHTML;
+		}
+
+		/* ═══════ COUNTERS ═══════ */
+		function initCounters() {
+			// run days since 2004.11.03
+			const start = new Date('2004-11-03');
+			const now = new Date();
+			const days = Math.floor((now - start) / 86400000);
+			document.getElementById('run-days').textContent = days.toLocaleString();
+
+			// visitor count
+			const base = 6847;
+			const extra = Math.floor((now - new Date('2019-06-01')) / 86400000) + Math.floor(Math.random() * 3);
+			document.getElementById('visitor-count').textContent = String(base + extra).padStart(7, '0');
+		}
+
+		document.addEventListener('DOMContentLoaded', initCounters);
+	</script>
 
 </body>
+
 </html>
